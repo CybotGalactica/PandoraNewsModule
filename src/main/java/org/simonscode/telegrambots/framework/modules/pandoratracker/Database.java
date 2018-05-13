@@ -1,6 +1,5 @@
 package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
-import javax.swing.*;
 import java.io.Closeable;
 import java.io.File;
 import java.sql.*;

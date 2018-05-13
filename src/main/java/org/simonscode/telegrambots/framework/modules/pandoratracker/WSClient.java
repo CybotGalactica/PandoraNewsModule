@@ -43,7 +43,7 @@ public class WSClient implements Closeable {
 
                 @Override
                 public void onError(Exception ex) {
-
+                    tracker.sendDebug("Warning: Websocket experienced an error: " + ex.getMessage());
                 }
             };
             webSocketClient.connect();
