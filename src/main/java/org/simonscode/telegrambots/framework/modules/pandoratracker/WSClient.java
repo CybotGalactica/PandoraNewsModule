@@ -15,7 +15,7 @@ public class WSClient implements Closeable {
     private WebSocketClient webSocketClient;
     private boolean closed = false;
 
-    public WSClient(PandoraTracker tracker, String address, MessageHandler messageHandler) {
+    public WSClient(PandoraTracker tracker, Message.Type type, String address, MessageHandler messageHandler) {
         try {
             webSocketClient = new WebSocketClient(new URI(address)) {
                 @Override
@@ -25,7 +25,7 @@ public class WSClient implements Closeable {
 
                 @Override
                 public void onMessage(String message) {
-                    messageHandler.onMessage(message);
+                    messageHandler.onMessage(type, message);
                 }
 
                 @Override
@@ -64,7 +64,7 @@ public class WSClient implements Closeable {
 
     @FunctionalInterface
     interface MessageHandler {
-        void onMessage(String message);
+        void onMessage(Message.Type type, String message);
     }
 }
 
