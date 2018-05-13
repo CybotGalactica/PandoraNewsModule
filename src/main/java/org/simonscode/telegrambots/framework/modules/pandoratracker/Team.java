@@ -1,14 +1,12 @@
-package org.simonscode.telegrambotsframework.modules.pandoratracker;
-
-import java.sql.SQLException;
+package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
 public class Team implements Comparable {
-    private PandoraTracker pandoraTracker;
+    private OldPandoraBot pandoraTracker;
     private String name;
     private int score;
     private int rank;
 
-    public Team(PandoraTracker pandoraTracker, String name, int score) {
+    public Team(OldPandoraBot pandoraTracker, String name, int score) {
         this.pandoraTracker = pandoraTracker;
         this.name = name;
         this.score = score;
@@ -39,15 +37,15 @@ public class Team implements Comparable {
     }
 
     public void save() {
-        try {
-            pandoraTracker.insertStatement.setString(1, name);
-            pandoraTracker.insertStatement.setInt(2, score);
-            pandoraTracker.insertStatement.setInt(3, rank);
-            pandoraTracker.insertStatement.setLong(4, System.currentTimeMillis());
-            pandoraTracker.insertStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            pandoraTracker.insertStatement.setString(1, name);
+//            pandoraTracker.insertStatement.setInt(2, score);
+//            pandoraTracker.insertStatement.setInt(3, rank);
+//            pandoraTracker.insertStatement.setLong(4, System.currentTimeMillis());
+//            pandoraTracker.insertStatement.executeUpdate();
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override

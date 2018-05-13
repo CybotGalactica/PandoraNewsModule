@@ -1,4 +1,4 @@
-package org.simonscode.telegrambotsframework.modules.pandoratracker;
+package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
 import java.util.ArrayList;
 import java.util.List;

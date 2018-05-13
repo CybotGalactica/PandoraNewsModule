@@ -1,67 +1,52 @@
-package org.simonscode.telegrambotsframework.modules.pandoratracker;
-
+package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.simonscode.telegrambots.framework.Bot;
-import org.simonscode.telegrambots.framework.Module;
-import org.simonscode.telegrambots.framework.Utils;
 import org.telegram.telegrambots.api.methods.ParseMode;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.Message;
-import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-/**
- * Created by simon on 16.05.17.
- */
-public class PandoraTracker implements Module {
+public class OldPandoraBot {
     private static final long CHATID = -1001050885996L;
-    private Thread child;
-    private boolean isRunning = true;
-    private Bot bot;
-    PreparedStatement insertStatement;
-    PreparedStatement getBetweenTimePoints;
-    PreparedStatement getPointsPerTeam;
+    private PreparedStatement insertMessage;
     private long targetChannel = 282400797L;
     //    private String targetChannel = "@pandonews";
+
+    private PreparedStatement insertStatement;
+    private PreparedStatement getBetweenTimePoints;
+    private PreparedStatement getPointsPerTeam;
+    private Thread child;
     private LinkedBlockingQueue<Integer> messageQueue;
     private HashMap<Integer, Message> messages;
-
+    private boolean isRunning = true;
     private State state = new State();
-
-    @Override
-    public void preLoad(Bot bot) {
-        try {
-            Connection connection = DriverManager.getConnection("jdbc:sqlite:database.sqlite");
-            connection.setAutoCommit(true);
-            insertStatement = connection.prepareStatement("INSERT INTO timepoints (TeamName, Score, Rank, TimeCode) VALUES (?, ?, ?,?);");
-            getBetweenTimePoints = connection.prepareStatement("SELECT  TeamName,  Score,  TimeCode FROM timepoints;");
-            getPointsPerTeam = connection.prepareStatement("SELECT Score, TimeCode FROM timepoints WHERE TeamName = ?;");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    private Bot bot;
+    private OldPandoraBot(Bot bot) {
         this.bot = bot;
+//        insertStatement = connection.prepareStatement("INSERT INTO timepoints (TeamName, Score, Rank, TimeCode) VALUES (?, ?, ?,?);");
+//        getBetweenTimePoints = connection.prepareStatement("SELECT  TeamName,  Score,  TimeCode FROM timepoints;");
+//        getPointsPerTeam = connection.prepareStatement("SELECT Score, TimeCode FROM timepoints WHERE TeamName = ?;");
+
         messageQueue = new LinkedBlockingQueue<>();
         messages = new HashMap<>();
         child = new Thread(this::setupRegularTask);
         child.setDaemon(true);
         child.setName("Lucifer");
     }
+
 
     private void setupRegularTask() {
         try {
@@ -95,64 +80,6 @@ public class PandoraTracker implements Module {
         } catch (InterruptedException | TelegramApiException | IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public String getName() {
-        return "PandoraTracker";
-    }
-
-    @Override
-    public String getVersion() {
-        return "2.0-SNAPSHOT";
-    }
-
-    @Override
-    public String getAuthor() {
-        return "Simon Struck";
-    }
-
-    @Override
-    public void initialize(org.simonscode.telegrambots.framework.State state) {
-        if (state != null) {
-            this.state = (State) state;
-        }
-    }
-
-    @Override
-    public void postLoad(Bot bot) {
-        child.start();
-    }
-
-    @Override
-    public void processUpdate(Bot sender, Update update) {
-        Message message = Utils.checkForCommand(update, "/done");
-        if (message != null && message.getFrom().getFirstName().startsWith("Simon")) {
-            System.out.print("Generating...");
-//            generatEndReport();
-            System.out.println("Done!");
-        }
-        System.out.println(update);
-    }
-
-    @Override
-    public void preUnload(Bot bot) {
-        isRunning = false;
-    }
-
-    @Override
-    public void postUnload(Bot bot) {
-
-    }
-
-    @Override
-    public org.simonscode.telegrambots.framework.State saveState(Bot bot) {
-        return state;
-    }
-
-    @Override
-    public Class<? extends org.simonscode.telegrambots.framework.State> getStateType() {
-        return State.class;
     }
 
     private void sendNewsMessage() throws IOException, TelegramApiException, InterruptedException {
@@ -337,4 +264,5 @@ public class PandoraTracker implements Module {
         }
         return changedTeams;
     }
+
 }
