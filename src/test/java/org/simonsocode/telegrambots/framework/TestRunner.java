@@ -10,7 +10,6 @@ import java.util.Collections;
 
 public class TestRunner {
 
-    private static final String testApiKey = "243219518:AAH9r9J8IQ1mMHGzNPKIV2YD0ZlgAE_F4tE";
     private static final String testBotUsername = "Simon\\u0027s Bot";
     private static final PandoraTrackerModule testModule = new PandoraTrackerModule();
 
@@ -18,7 +17,7 @@ public class TestRunner {
         ApiContextInitializer.init();
         TelegramBotsApi api = new TelegramBotsApi();
 
-        Bot bot = new Bot(testBotUsername, testApiKey, Collections.singletonList(testModule));
+        Bot bot = new Bot(testBotUsername, args[0], Collections.singletonList(testModule));
         testModule.preLoad(bot);
         api.registerBot(bot);
         testModule.postLoad(bot);
