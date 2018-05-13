@@ -19,13 +19,20 @@ public class PandoraTrackerModule extends ModuleAdapter {
 
     @Override
     public void processUpdate(Bot sender, Update update) {
-        Message message = Utils.checkForCommand(update, "/abort");
+        Message message = Utils.checkForCommand(update, "/stop");
         if (message != null && message.getFrom().getFirstName().startsWith("Simon")) {
             pandoraTracker.sendDebug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
             pandoraTracker.stop();
-        } else {
-            System.out.println(update);
+            return;
         }
+
+        message = Utils.checkForCommand(update, "/start");
+        if (message != null && message.getFrom().getFirstName().startsWith("Simon")) {
+            pandoraTracker.sendDebug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
+            pandoraTracker.start(sender);
+            return;
+        }
+        System.out.println(update);
     }
 
     @Override

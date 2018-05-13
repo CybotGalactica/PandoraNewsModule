@@ -28,6 +28,8 @@ public class PandoraTracker {
         wsKillShout = new WSClient(this,"wss://iapandora.nl/ws/killshout?subscribe-broadcast", this::onMessage);
         wsPuzzleFeed = new WSClient(this,"wss://iapandora.nl/ws/puzzlefeed?subscribe-broadcast", this::onMessage);
         wsNewsFeed = new WSClient(this,"wss://iapandora.nl/ws/news?subscribe-broadcast", this::onMessage);
+
+        sendDebug("Bot is up and running!");
     }
 
     public void stop() {
@@ -35,6 +37,7 @@ public class PandoraTracker {
         wsKillShout.close();
         wsPuzzleFeed.close();
         wsNewsFeed.close();
+        db.close();
     }
 
     private void onMessage(String update){
