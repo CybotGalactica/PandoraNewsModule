@@ -16,6 +16,7 @@ public class Database implements Closeable {
         this.tracker = tracker;
         try {
             boolean dbExists = new File("database.sqlite").exists();
+            Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection("jdbc:sqlite:database.sqlite");
             connection.setAutoCommit(true);
             if (!dbExists) {
@@ -50,7 +51,7 @@ public class Database implements Closeable {
             insertCurrentScore = connection.prepareStatement("INSERT INTO scores (team, score) VALUES (?, ?);");
             insertKill = connection.prepareStatement("INSERT INTO kills (killer, victim) VALUES (?, ?);");
             insertPuzzle = connection.prepareStatement("INSERT INTO puzzels (player, puzzle) VALUES (?, ?);");
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
