@@ -19,19 +19,15 @@ public class PandoraTracker {
     private final String officialChannel = "@pandonews";
     private final ConcurrentLinkedQueue<Update> messageQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<String> debugQueue = new ConcurrentLinkedQueue<>();
-    boolean isOfficial = true;
-    private long timeBetweenMessages = 5_000;
-    private Timer messageTimer = new Timer();
+    private final long timeBetweenMessages = 15_000;
+    private final Timer messageTimer = new Timer();
+    private boolean isOfficial = true;
     private Bot bot;
     private Database db;
     private WSClient wsKillFeed;
     private WSClient wsKillShout;
     private WSClient wsPuzzleFeed;
     private WSClient wsNewsFeed;
-
-    PandoraTracker() {
-
-    }
 
     public static void main(String[] args) throws TelegramApiRequestException {
         ApiContextInitializer.init();
@@ -52,13 +48,14 @@ public class PandoraTracker {
         wsPuzzleFeed = new WSClient(this, Update.Type.PUZZLE, "wss://iapandora.nl/ws/puzzlefeed?subscribe-broadcast", this::onUpdate);
         wsNewsFeed = new WSClient(this, Update.Type.NEWS, "wss://iapandora.nl/ws/news?subscribe-broadcast", this::onUpdate);
 
-        debug("Bot is up and running!");
         messageTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 sendMessageIfNeeded();
             }
         }, timeBetweenMessages, timeBetweenMessages);
+
+        debug("Bot is up and running!");
     }
 
     void debug(String debugMessage) {
