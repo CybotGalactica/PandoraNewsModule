@@ -15,6 +15,7 @@ public class WSClient implements Closeable {
     private WebSocketClient webSocketClient;
     private boolean closed = false;
     private TimerTask restartTask;
+    private final int restartTimeout = 5000;
 
     public WSClient(PandoraTracker tracker, Message.Type type, String address, MessageHandler messageHandler) {
         restartTimer = new Timer();
@@ -22,43 +23,47 @@ public class WSClient implements Closeable {
             @Override
             public void run() {
                 try {
-                    webSocketClient.connectBlocking();
-                } catch (InterruptedException e) {
-                    tracker.sendDebug("Error: " + e.getMessage());
-                    restartTimer.schedule(restartTask, 5000);
+                    restart(tracker, type, address, messageHandler);
+                } catch (URISyntaxException e) {
+                    restartTimer.schedule(restartTask, restartTimeout);
+                    e.printStackTrace();
                 }
             }
         };
 
         try {
-            webSocketClient = new WebSocketClient(new URI(address)) {
-                @Override
-                public void onOpen(ServerHandshake handshakedata) {
-                    tracker.sendDebug("(Re)Connected: " + address);
-                }
-
-                @Override
-                public void onMessage(String message) {
-                    messageHandler.onMessage(type, message);
-                }
-
-                @Override
-                public void onClose(int code, String reason, boolean remote) {
-                    if (!closed) {
-                        restartTimer.schedule(restartTask, 5_000);
-                        tracker.sendDebug("Warning: Websocket was closed: " + address);
-                    }
-                }
-
-                @Override
-                public void onError(Exception ex) {
-                    tracker.sendDebug("Warning: Websocket experienced an error: " + ex.getMessage());
-                }
-            };
-            webSocketClient.connect();
+            restart(tracker, type, address, messageHandler);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
+    }
+
+    private void restart(PandoraTracker tracker, Message.Type type, String address, MessageHandler messageHandler) throws URISyntaxException {
+        webSocketClient = new WebSocketClient(new URI(address)) {
+            @Override
+            public void onOpen(ServerHandshake handshakedata) {
+                tracker.sendDebug("(Re)Connected: " + address);
+            }
+
+            @Override
+            public void onMessage(String message) {
+                messageHandler.onMessage(type, message);
+            }
+
+            @Override
+            public void onClose(int code, String reason, boolean remote) {
+                if (!closed) {
+                    restartTimer.schedule(restartTask, restartTimeout);
+                    tracker.sendDebug("Warning: Websocket was closed: " + address);
+                }
+            }
+
+            @Override
+            public void onError(Exception ex) {
+                tracker.sendDebug("Warning: Websocket experienced an error: " + ex.getMessage());
+            }
+        };
+        webSocketClient.connect();
     }
 
     public void close() {
