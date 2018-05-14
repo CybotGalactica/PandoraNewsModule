@@ -19,7 +19,7 @@ public class PandoraTracker {
     private final String officialChannel = "@pandonews";
     private final ConcurrentLinkedQueue<Update> messageQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<String> debugQueue = new ConcurrentLinkedQueue<>();
-    boolean isOfficial = false;
+    boolean isOfficial = true;
     private long timeBetweenMessages = 5_000;
     private Timer messageTimer = new Timer();
     private Bot bot;
@@ -38,6 +38,7 @@ public class PandoraTracker {
         TelegramBotsApi api = new TelegramBotsApi();
 
         PandoraTracker pandoraTracker = new PandoraTracker();
+        pandoraTracker.isOfficial = false;
         Bot bot = new Bot("Bot", args[0], Collections.singletonList(new PandoraTrackerModule()));
         api.registerBot(bot);
         pandoraTracker.start(bot);
