@@ -39,10 +39,10 @@ public class PandoraTracker {
     public void start(Bot bot) {
         this.bot = bot;
         db = new Database(this);
-        wsKillFeed = new WSClient(this, Message.Type.KILLFEED, "wss://iapandora.nl/ws/killfeed?subscribe-broadcast", this::onMessage);
-        wsKillShout = new WSClient(this, Message.Type.KILLSHOUT, "wss://iapandora.nl/ws/killshout?subscribe-broadcast", this::onMessage);
-        wsPuzzleFeed = new WSClient(this, Message.Type.PUZZLE, "wss://iapandora.nl/ws/puzzlefeed?subscribe-broadcast", this::onMessage);
-        wsNewsFeed = new WSClient(this, Message.Type.NEWS, "wss://iapandora.nl/ws/news?subscribe-broadcast", this::onMessage);
+        wsKillFeed = new WSClient(this, Update.Type.KILLFEED, "wss://iapandora.nl/ws/killfeed?subscribe-broadcast", this::onMessage);
+        wsKillShout = new WSClient(this, Update.Type.KILLSHOUT, "wss://iapandora.nl/ws/killshout?subscribe-broadcast", this::onMessage);
+        wsPuzzleFeed = new WSClient(this, Update.Type.PUZZLE, "wss://iapandora.nl/ws/puzzlefeed?subscribe-broadcast", this::onMessage);
+        wsNewsFeed = new WSClient(this, Update.Type.NEWS, "wss://iapandora.nl/ws/news?subscribe-broadcast", this::onMessage);
 
         sendDebug("Bot is up and running!");
     }
@@ -55,17 +55,17 @@ public class PandoraTracker {
         db.close();
     }
 
-    private void onMessage(Message.Type type, String update) {
+    private void onMessage(Update.Type type, String update) {
         if (update.equals("--heartbeat--")) {
             return;
         }
         System.out.println("Received: " + update);
         db.insertMessage(update);
-        Message message = new Message(type, update);
+        Update message = new Update(type, update);
         sendUpdate(message);
     }
 
-    private void sendUpdate(Message updateMessage) {
+    private void sendUpdate(Update updateMessage) {
         try {
             SendMessage sendMessage = updateMessage.getSendMessage();
             sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);

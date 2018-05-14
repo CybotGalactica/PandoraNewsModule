@@ -11,13 +11,13 @@ import java.util.TimerTask;
 
 public class WSClient implements Closeable {
 
-    private static Timer restartTimer;
+    private Timer restartTimer;
     private final int restartTimeout = 5000;
     private WebSocketClient webSocketClient;
     private boolean closed = false;
     private TimerTask restartTask;
 
-    public WSClient(PandoraTracker tracker, Message.Type type, String address, MessageHandler messageHandler) {
+    public WSClient(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) {
         restartTimer = new Timer();
         restartTask = new TimerTask() {
             @Override
@@ -39,7 +39,7 @@ public class WSClient implements Closeable {
         }
     }
 
-    private void restart(PandoraTracker tracker, Message.Type type, String address, MessageHandler messageHandler) throws URISyntaxException {
+    private void restart(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) throws URISyntaxException {
         closed = false;
         webSocketClient = new WebSocketClient(new URI(address)) {
             @Override
@@ -81,7 +81,7 @@ public class WSClient implements Closeable {
 
     @FunctionalInterface
     interface MessageHandler {
-        void onMessage(Message.Type type, String message);
+        void onMessage(Update.Type type, String message);
     }
 }
 

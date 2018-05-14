@@ -2,12 +2,12 @@ package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 
-public class Message {
+public class Update {
 
     private final Type type;
     private final String input;
 
-    public Message(Type type, String input) {
+    public Update(Type type, String input) {
         this.type = type;
         this.input = input;
     }
