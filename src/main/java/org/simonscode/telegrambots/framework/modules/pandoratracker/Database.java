@@ -44,7 +44,7 @@ public class Database implements Closeable {
             insertMessage.execute();
         } catch (SQLException e) {
             e.printStackTrace();
-            tracker.sendDebug("Error: " + e.getMessage());
+            tracker.debug("Error: " + e.getMessage());
         }
     }
 
@@ -107,7 +107,7 @@ public class Database implements Closeable {
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
-            tracker.sendDebug("Error closing database! " + e.getMessage());
+            tracker.debug("Error closing database! " + e.getMessage());
         }
     }
 }

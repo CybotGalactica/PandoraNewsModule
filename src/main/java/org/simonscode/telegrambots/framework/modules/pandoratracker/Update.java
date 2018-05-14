@@ -14,8 +14,12 @@ public class Update {
 
     public SendMessage getSendMessage() {
         SendMessage sendMessage = new SendMessage();
-        sendMessage.setText(String.format("[%s] %s", type.getValue(), input));
+        sendMessage.setText(getText());
         return sendMessage;
+    }
+
+    public String getText() {
+        return String.format("[%s] %s", type.getValue(), input);
     }
 
     enum Type {
