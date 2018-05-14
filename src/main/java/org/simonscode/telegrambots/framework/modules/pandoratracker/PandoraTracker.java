@@ -10,18 +10,12 @@ import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 import java.util.Collections;
 
 public class PandoraTracker {
-
-    // Private
-    private final long debugChannel = -1001334509240L;
-    private final long targetChannel = -1001334509240L;
-    // Official Channel
+    private final String debugChannel = "-1001334509240";
+    private final String unofficialChannel = "-1001334509240";
+    boolean isOfficial = false;
     private final String officialChannel = "@pandonews";
 
-    // Group Chat
-    //        private final long debugChannel = -1001210020895L;
-
     public static void main(String[] args) throws TelegramApiRequestException {
-
         ApiContextInitializer.init();
         TelegramBotsApi api = new TelegramBotsApi();
 
@@ -74,7 +68,7 @@ public class PandoraTracker {
     private void sendUpdate(Message updateMessage) {
         try {
             SendMessage sendMessage = updateMessage.getSendMessage();
-            sendMessage.setChatId(targetChannel);
+            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
             bot.execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
@@ -90,5 +84,10 @@ public class PandoraTracker {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+    }
+
+    public void toggleOfficial() {
+        isOfficial = !isOfficial;
+        sendDebug("Switched to " + (isOfficial ? "Official" : "Debug"));
     }
 }

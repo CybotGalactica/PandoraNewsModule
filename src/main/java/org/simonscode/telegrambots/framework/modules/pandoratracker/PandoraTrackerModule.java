@@ -32,6 +32,13 @@ public class PandoraTrackerModule extends ModuleAdapter {
             pandoraTracker.start(sender);
             return;
         }
+
+        message = Utils.checkForCommand(update, "/toogle");
+        if (message != null && message.getFrom().getFirstName().startsWith("Simon")) {
+            pandoraTracker.toggleOfficial();
+            return;
+        }
+
         System.out.println(update);
     }
 
