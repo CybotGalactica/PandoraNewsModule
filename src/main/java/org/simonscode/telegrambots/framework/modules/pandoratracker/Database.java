@@ -3,6 +3,8 @@ package org.simonscode.telegrambots.framework.modules.pandoratracker;
 import java.io.Closeable;
 import java.io.File;
 import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Database implements Closeable {
     private final PandoraTracker tracker;
@@ -14,6 +16,7 @@ public class Database implements Closeable {
     private PreparedStatement getTeamIdByName;
     private PreparedStatement getTeamAliasById;
     private PreparedStatement getAliasByFullName;
+    private PreparedStatement getUserIdToAliases;
 
     public Database(PandoraTracker tracker) {
         this.tracker = tracker;
@@ -33,6 +36,7 @@ public class Database implements Closeable {
             getTeamIdByName = connection.prepareStatement("SELECT id FROM teams WHERE fullName = ?;");
             getTeamAliasById = connection.prepareStatement("SELECT alias FROM teams WHERE id = ?;");
             getAliasByFullName = connection.prepareStatement("SELECT alias FROM teams WHERE fullName = ? LIMIT 1;");
+            getUserIdToAliases = connection.prepareStatement("SELECT userId, alias FROM teams;");
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -99,6 +103,15 @@ public class Database implements Closeable {
         ResultSet resultSet = getAliasByFullName.executeQuery();
         resultSet.first();
         return resultSet.getString(1);
+    }
+
+    public Map<Integer, String> getUserIdToAliases() throws SQLException {
+        ResultSet resultSet = getUserIdToAliases.executeQuery();
+        Map<Integer, String> aliases = new HashMap<>();
+        while (resultSet.next()) {
+            aliases.put(resultSet.getInt("userId"), resultSet.getString("alias"));
+        }
+        return aliases;
     }
 
     @Override

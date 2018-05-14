@@ -12,7 +12,7 @@ import java.util.Collections;
 public class PandoraTracker {
     private final String debugChannel = "-1001334509240";
     private final String unofficialChannel = "-1001334509240";
-    boolean isOfficial = true;
+    boolean isOfficial = false;
     private final String officialChannel = "@pandonews";
 
     public static void main(String[] args) throws TelegramApiRequestException {
@@ -31,6 +31,7 @@ public class PandoraTracker {
     private WSClient wsKillShout;
     private WSClient wsPuzzleFeed;
     private WSClient wsNewsFeed;
+    private Scoreboard scoreboard;
 
     public PandoraTracker() {
 
@@ -43,6 +44,8 @@ public class PandoraTracker {
         wsKillShout = new WSClient(this, Update.Type.KILLSHOUT, "wss://iapandora.nl/ws/killshout?subscribe-broadcast", this::onMessage);
         wsPuzzleFeed = new WSClient(this, Update.Type.PUZZLE, "wss://iapandora.nl/ws/puzzlefeed?subscribe-broadcast", this::onMessage);
         wsNewsFeed = new WSClient(this, Update.Type.NEWS, "wss://iapandora.nl/ws/news?subscribe-broadcast", this::onMessage);
+        scoreboard = new Scoreboard(db);
+        scoreboard.start();
 
         sendDebug("Bot is up and running!");
     }
@@ -52,6 +55,7 @@ public class PandoraTracker {
         wsKillShout.close();
         wsPuzzleFeed.close();
         wsNewsFeed.close();
+        scoreboard.stop();
         db.close();
     }
 
