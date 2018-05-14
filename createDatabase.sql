@@ -24,6 +24,14 @@ CREATE TABLE puzzels (
   id          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   currentTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   player      TEXT      NOT NULL,
-  puzzle      TEXT
+  puzzle      TEXT      NOT NULL
+);
+
+
+CREATE TABLE teams (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  userId   INTEGER NOT NULL,
+  fullName TEXT    NOT NULL,
+  alias    TEXT    NOT NULL
 );
 
