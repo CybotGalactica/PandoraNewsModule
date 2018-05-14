@@ -20,21 +20,21 @@ public class PandoraTrackerModule extends ModuleAdapter {
 
     @Override
     public void processUpdate(Bot sender, Update update) {
-        Message message = Utils.checkForCommand(update, "/stop");
+        Message message = Utils.checkForCommand(update, "/end");
         if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.sendDebug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
             pandoraTracker.stop();
             return;
         }
 
-        message = Utils.checkForCommand(update, "/start");
+        message = Utils.checkForCommand(update, "/begin");
         if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.sendDebug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
             pandoraTracker.start(sender);
             return;
         }
 
-        message = Utils.checkForCommand(update, "/toogle");
+        message = Utils.checkForCommand(update, "/toggle");
         if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.toggleOfficial();
             return;

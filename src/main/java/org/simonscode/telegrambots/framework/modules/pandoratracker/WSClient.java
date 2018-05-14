@@ -40,6 +40,7 @@ public class WSClient implements Closeable {
     }
 
     private void restart(PandoraTracker tracker, Message.Type type, String address, MessageHandler messageHandler) throws URISyntaxException {
+        closed = false;
         webSocketClient = new WebSocketClient(new URI(address)) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {

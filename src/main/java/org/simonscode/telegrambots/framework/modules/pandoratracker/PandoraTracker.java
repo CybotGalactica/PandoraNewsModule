@@ -12,7 +12,7 @@ import java.util.Collections;
 public class PandoraTracker {
     private final String debugChannel = "-1001334509240";
     private final String unofficialChannel = "-1001334509240";
-    boolean isOfficial = false;
+    boolean isOfficial = true;
     private final String officialChannel = "@pandonews";
 
     public static void main(String[] args) throws TelegramApiRequestException {
