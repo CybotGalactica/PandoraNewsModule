@@ -22,14 +22,14 @@ public class PandoraTrackerModule extends ModuleAdapter {
     public void processUpdate(Bot sender, Update update) {
         Message message = Utils.checkForCommand(update, "/end");
         if (message != null && message.getChatId() == commandSource) {
-            pandoraTracker.sendDebug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
+            pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
             pandoraTracker.stop();
             return;
         }
 
         message = Utils.checkForCommand(update, "/begin");
         if (message != null && message.getChatId() == commandSource) {
-            pandoraTracker.sendDebug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
+            pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
             pandoraTracker.start(sender);
             return;
         }
