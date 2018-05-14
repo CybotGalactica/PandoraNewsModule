@@ -11,16 +11,30 @@ import java.util.TimerTask;
 
 public class WSClient implements Closeable {
 
-    private static Timer restartTimer = new Timer();
+    private static Timer restartTimer;
     private WebSocketClient webSocketClient;
     private boolean closed = false;
+    private TimerTask restartTask;
 
     public WSClient(PandoraTracker tracker, Message.Type type, String address, MessageHandler messageHandler) {
+        restartTimer = new Timer();
+        restartTask = new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    webSocketClient.connectBlocking();
+                } catch (InterruptedException e) {
+                    tracker.sendDebug("Error: " + e.getMessage());
+                    restartTimer.schedule(restartTask, 5000);
+                }
+            }
+        };
+
         try {
             webSocketClient = new WebSocketClient(new URI(address)) {
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
-                    System.out.println("Connected: " + address);
+                    tracker.sendDebug("(Re)Connected: " + address);
                 }
 
                 @Override
@@ -31,12 +45,7 @@ public class WSClient implements Closeable {
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
                     if (!closed) {
-                        restartTimer.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                webSocketClient.connect();
-                            }
-                        }, 5_000);
+                        restartTimer.schedule(restartTask, 5_000);
                         tracker.sendDebug("Warning: Websocket was closed: " + address);
                     }
                 }
