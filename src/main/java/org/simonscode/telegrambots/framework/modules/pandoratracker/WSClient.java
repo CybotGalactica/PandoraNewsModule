@@ -43,7 +43,7 @@ public class WSClient implements Closeable {
         webSocketClient = new WebSocketClient(new URI(address)) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {
-                tracker.sendDebug("(Re)Connected: " + address);
+                tracker.sendDebug("Connected: " + type.getValue());
             }
 
             @Override
@@ -55,13 +55,13 @@ public class WSClient implements Closeable {
             public void onClose(int code, String reason, boolean remote) {
                 if (!closed) {
                     restartTimer.schedule(restartTask, restartTimeout);
-                    tracker.sendDebug("Warning: Websocket was closed: " + address);
+                    tracker.sendDebug("Websocket closed: " + type.getValue());
                 }
             }
 
             @Override
             public void onError(Exception ex) {
-                tracker.sendDebug("Warning: Websocket experienced an error: " + ex.getMessage());
+                tracker.sendDebug("Websocket Error: " + ex.getMessage());
             }
         };
         webSocketClient.connect();

@@ -1,21 +1,35 @@
 package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
 import org.simonscode.telegrambots.framework.Bot;
+import org.telegram.telegrambots.ApiContextInitializer;
+import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
+import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
+
+import java.util.Collections;
 
 public class PandoraTracker {
 
     // Private
-    private final long debugChannel = 282400797L;
-    private final long targetChannel = 282400797L;
+    private final long debugChannel = -1001334509240L;
+    private final long targetChannel = -1001334509240L;
+    // Official Channel
+    private final String officialChannel = "@pandonews";
 
     // Group Chat
-    //    private final long debugChannel = -1001210020895L;
-    //    private final long targetChannel = -1001210020895L;
+    //        private final long debugChannel = -1001210020895L;
 
-    // Official Channel
-    //    private final String targetChannel = "@pandonews";
+    public static void main(String[] args) throws TelegramApiRequestException {
+
+        ApiContextInitializer.init();
+        TelegramBotsApi api = new TelegramBotsApi();
+
+        PandoraTracker pandoraTracker = new PandoraTracker();
+        Bot bot = new Bot("Bot", args[0], Collections.singletonList(new PandoraTrackerModule()));
+        api.registerBot(bot);
+        pandoraTracker.start(bot);
+    }
 
     private Bot bot;
     private Database db;
@@ -37,17 +51,6 @@ public class PandoraTracker {
         wsNewsFeed = new WSClient(this, Message.Type.NEWS, "wss://iapandora.nl/ws/news?subscribe-broadcast", this::onMessage);
 
         sendDebug("Bot is up and running!");
-    }
-
-    public void sendDebug(String debugMessage) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(debugChannel);
-        sendMessage.setText(debugMessage);
-        try {
-            bot.execute(sendMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
     }
 
     public void stop() {
@@ -72,6 +75,17 @@ public class PandoraTracker {
         try {
             SendMessage sendMessage = updateMessage.getSendMessage();
             sendMessage.setChatId(targetChannel);
+            bot.execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendDebug(String debugMessage) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(debugChannel);
+        sendMessage.setText("Debug: " + debugMessage);
+        try {
             bot.execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
