@@ -9,6 +9,7 @@ import org.telegram.telegrambots.api.objects.Update;
 @AutoService(Module.class)
 public class PandoraTrackerModule extends ModuleAdapter {
 
+    private final long commandSource = -1001210020895L;
     private State state = new State();
     private PandoraTracker pandoraTracker = new PandoraTracker();
 
@@ -20,21 +21,21 @@ public class PandoraTrackerModule extends ModuleAdapter {
     @Override
     public void processUpdate(Bot sender, Update update) {
         Message message = Utils.checkForCommand(update, "/stop");
-        if (message != null && message.getFrom().getFirstName().startsWith("Simon")) {
+        if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.sendDebug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
             pandoraTracker.stop();
             return;
         }
 
         message = Utils.checkForCommand(update, "/start");
-        if (message != null && message.getFrom().getFirstName().startsWith("Simon")) {
+        if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.sendDebug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
             pandoraTracker.start(sender);
             return;
         }
 
         message = Utils.checkForCommand(update, "/toogle");
-        if (message != null && message.getFrom().getFirstName().startsWith("Simon")) {
+        if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.toggleOfficial();
             return;
         }
