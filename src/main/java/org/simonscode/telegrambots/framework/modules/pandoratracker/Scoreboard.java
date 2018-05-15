@@ -14,20 +14,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class Scoreboard {
+class Scoreboard {
     private static final String URL = "https://www.iapandora.nl/scores";
     private final Gson gson;
-    private Map<Integer, String> userIdToAlias;
     private Map<String, String> fullNameToAlias;
     private String scoreboardText;
     private Thread scoreboardFetcher;
 
-    public Scoreboard() {
-        userIdToAlias = new HashMap<>();
+    Scoreboard() {
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+        Map<Integer, String> userIdToAlias = new HashMap<>();
         fullNameToAlias = new HashMap<>();
         gson = new GsonBuilder()
-                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .create();
+                       .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                       .create();
 
         fullNameToAlias.put("Meltdown 6", "Meltdown 6");
         fullNameToAlias.put("Arstotzkaasschaaf", "Arstotzkaasschaaf");
@@ -84,7 +84,7 @@ public class Scoreboard {
         userIdToAlias.put(28, "Disneyland");
     }
 
-    public String getText() {
+    String getText() {
         if (scoreboardText == null) {
             System.out.println("This should run once.");
             fetchScoreboard();
@@ -160,38 +160,46 @@ public class Scoreboard {
         int rank;
         int timeBonus;
 
+        @SuppressWarnings("unused")
         public int getHints() {
             return hints;
         }
 
+        @SuppressWarnings("unused")
         public String getFullName() {
             return fullName;
         }
 
+        @SuppressWarnings("unused")
         public int getTotal() {
             return total;
         }
 
+        @SuppressWarnings("unused")
         public String getPuzzleNumbers() {
             return puzzleNumbers;
         }
 
+        @SuppressWarnings("unused")
         public int getUserId() {
             return userId;
         }
 
+        @SuppressWarnings("unused")
         public int getKills() {
             return kills;
         }
 
+        @SuppressWarnings("unused")
         public int getPuzzlePoints() {
             return puzzlePoints;
         }
 
-        public int getRank() {
+        int getRank() {
             return rank;
         }
 
+        @SuppressWarnings("unused")
         public int getTimeBonus() {
             return timeBonus;
         }

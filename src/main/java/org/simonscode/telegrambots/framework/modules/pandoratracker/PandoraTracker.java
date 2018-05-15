@@ -1,16 +1,12 @@
 package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
 import org.simonscode.telegrambots.framework.Bot;
-import org.telegram.telegrambots.ApiContextInitializer;
-import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.ParseMode;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
-import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,6 +22,8 @@ public class PandoraTracker {
     private final ConcurrentLinkedQueue<String> debugQueue = new ConcurrentLinkedQueue<>();
     @SuppressWarnings("FieldCanBeLocal")
     private final long timeBetweenMessages = 10_000;
+    @SuppressWarnings("FieldCanBeLocal")
+    private boolean grouping = false;
     private final Timer messageTimer = new Timer();
     private Integer scoreboardMessageId;
     private boolean isOfficial = true;
@@ -36,16 +34,6 @@ public class PandoraTracker {
     private WSClient wsPuzzleFeed;
     private WSClient wsNewsFeed;
     private Scoreboard scoreboard;
-
-    public static void main(String[] args) throws TelegramApiRequestException {
-        ApiContextInitializer.init();
-        TelegramBotsApi api = new TelegramBotsApi();
-        PandoraTrackerModule pandoraTrackerModule = new PandoraTrackerModule();
-        Bot bot = new Bot("Bot", args[0], Collections.singletonList(pandoraTrackerModule));
-        pandoraTrackerModule.postLoad(bot);
-        pandoraTrackerModule.getTracker().isOfficial = false;
-        api.registerBot(bot);
-    }
 
     void start(Bot bot) {
         this.bot = bot;
@@ -137,7 +125,7 @@ public class PandoraTracker {
             sendMessage.setText(message);
             sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
             history.add(bot.execute(sendMessage));
-            System.out.println("[Send] " + sendMessage.getText());
+            System.out.println("[Sent] " + sendMessage.getText());
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
@@ -173,7 +161,7 @@ public class PandoraTracker {
         edit.setChatId(message.getChatId());
         edit.setMessageId(scoreboardMessageId);
         edit.setText(message.getText());
-        System.out.println("[Edit] " + message.getText());
+        System.out.println("[Edited] " + message.getText());
         try {
             bot.execute(edit);
         } catch (TelegramApiException e) {
@@ -197,10 +185,22 @@ public class PandoraTracker {
         System.out.println("Received: " + update);
         db.insertMessage(update);
         messageQueue.add(new Update(type, update));
+        if (!grouping) {
+            sendMessageIfNeeded();
+        }
     }
 
     void toggleOfficial() {
         isOfficial = !isOfficial;
         debug("Switched to " + (isOfficial ? "Official" : "Debug"));
+    }
+
+    void toggleGrouping() {
+        grouping = !grouping;
+        debug((grouping ? "Enabled" : "Disabled") + " grouping");
+    }
+
+    public void setOfficial(boolean isOfficial) {
+        this.isOfficial = isOfficial;
     }
 }

@@ -14,22 +14,16 @@ public class WSClient implements Closeable {
     private boolean closed = false;
     private Runnable restartTask;
 
-    public WSClient(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) {
+    WSClient(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) {
         restartTask = () -> {
-        try {
-            Thread.sleep(restartTimeout);
-            restart(tracker, type, address, messageHandler);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    };
+            try {
+                Thread.sleep(restartTimeout);
+                restart(tracker, type, address, messageHandler);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        };
         restart(tracker, type, address, messageHandler);
-    }
-
-    private void setRestart(){
-        Thread restartThread = new Thread(restartTask);
-        restartThread.setDaemon(true);
-        restartThread.start();
     }
 
     private void restart(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) {
@@ -54,13 +48,20 @@ public class WSClient implements Closeable {
 
                 @Override
                 public void onError(Exception ex) {
-                    tracker.debug("Websocket Error: " + ex.getMessage());
+                    tracker.debug("Websocket restarting: " + type.toString());
                 }
             };
             webSocketClient.connect();
-        }catch (URISyntaxException e) {
-
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            tracker.debug("Error during restarting WebSockets! PANIQUE!!!");
         }
+    }
+
+    private void setRestart() {
+        Thread restartThread = new Thread(restartTask);
+        restartThread.setDaemon(true);
+        restartThread.start();
     }
 
     public void close() {
