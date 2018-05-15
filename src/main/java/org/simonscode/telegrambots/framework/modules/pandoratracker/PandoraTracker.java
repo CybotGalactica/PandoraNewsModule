@@ -7,6 +7,7 @@ import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Timer;
@@ -41,7 +42,6 @@ public class PandoraTracker {
         pandoraTracker.start(bot);
     }
 
-    public void start(Bot bot) {
     void start(Bot bot) {
         this.bot = bot;
         db = new Database(this);
@@ -49,8 +49,11 @@ public class PandoraTracker {
         wsKillShout = new WSClient(this, Update.Type.KILLSHOUT, "wss://iapandora.nl/ws/killshout?subscribe-broadcast", this::onUpdate);
         wsPuzzleFeed = new WSClient(this, Update.Type.PUZZLE, "wss://iapandora.nl/ws/puzzlefeed?subscribe-broadcast", this::onUpdate);
         wsNewsFeed = new WSClient(this, Update.Type.NEWS, "wss://iapandora.nl/ws/news?subscribe-broadcast", this::onUpdate);
-        scoreboard = new Scoreboard(db);
-        scoreboard.start();
+        try {
+            scoreboard = new Scoreboard(this, db);
+        } catch (SQLException e) {
+            scoreboard = null;
+        }
 
         messageTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -105,7 +108,6 @@ public class PandoraTracker {
         wsKillShout.close();
         wsPuzzleFeed.close();
         wsNewsFeed.close();
-        scoreboard.stop();
         db.close();
     }
 

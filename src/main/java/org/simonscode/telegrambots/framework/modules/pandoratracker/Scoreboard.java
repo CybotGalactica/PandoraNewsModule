@@ -1,70 +1,49 @@
 package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
+import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
 import java.io.IOException;
-import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.*;
 
 public class Scoreboard {
-    private static final int startingDayOfYear = 134;
-    private static final String URL_BASE = "https://iapandora.nl/scores/day";
+    private static final String URL = "https://iapandora.nl/scores/day1";
     private final Gson gson;
-    private Timer timer;
-    private Database db;
     private Map<Integer, String> aliases;
 
-    private static String getUrl() {
-        Calendar calendar = Calendar.getInstance();
-        int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
-        return URL_BASE + Integer.toString(dayOfYear - startingDayOfYear + 1);
-    }
 
-    public Scoreboard(Database db) {
-
-        gson = new GsonBuilder().create();
-    }
-
-    public void start() {
-        if (timer == null) {
-            timer = new Timer();
-            timer.scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    sendScoreboard();
-                }
-            }, 0, 5000L);
-        }
-    }
-
-    public void stop() {
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-        }
-    }
-
-    private void sendScoreboard() {
+    public Scoreboard(PandoraTracker tracker, Database db) throws SQLException {
         try {
-            String json = Jsoup.connect(getUrl())
-                    .ignoreContentType(true)
-                    .execute()
-                    .body();
-            List<ScoreboardRow> scores = parse(json);
-            generate(scores);
-        } catch (IOException e) {
-            e.printStackTrace();
+            aliases = db.getUserIdToAliases();
+        } catch (SQLException e) {
+            tracker.debug("Error: " + e.getMessage());
+            throw e;
         }
+        gson = new GsonBuilder()
+                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                .create();
+    }
+
+    //TODO: Change the jsoup stuff to acquire all the data
+    public String fetchScoreBoardMessage() throws IOException {
+        String json = Jsoup.connect(URL)
+                .ignoreContentType(true)
+                .execute()
+                .body();
+        List<ScoreboardRow> scores = parse(json);
+        scores.sort(Comparator.comparingInt(ScoreboardRow::getRank));
+        scores.subList(0, 10);
+        return generate(scores);
     }
 
     private List<ScoreboardRow> parse(String json) {
         return Arrays.asList(gson.fromJson(json, ScoreboardRow[].class));
     }
 
-    String generate(List<ScoreboardRow> scores) {
+    private String generate(List<ScoreboardRow> scores) {
         StringBuilder sb = new StringBuilder();
         sb.append("```\n");
         int longest = 0;
@@ -75,7 +54,7 @@ public class Scoreboard {
         }
         for (int i = 0; i < scores.size(); i++) {
             ScoreboardRow score = scores.get(i);
-            sb.append(i == scores.size() - 1 ? "" : " ");
+            sb.append(i + 1 > 9 ? "" : " ");
             sb.append(i + 1);
             sb.append(" | ");
             sb.append(aliases.get(score.userId));
@@ -100,5 +79,41 @@ public class Scoreboard {
         int puzzlePoints;
         int rank;
         int timeBonus;
+
+        public int getHints() {
+            return hints;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public int getTotal() {
+            return total;
+        }
+
+        public String getPuzzleNumbers() {
+            return puzzleNumbers;
+        }
+
+        public int getUserId() {
+            return userId;
+        }
+
+        public int getKills() {
+            return kills;
+        }
+
+        public int getPuzzlePoints() {
+            return puzzlePoints;
+        }
+
+        public int getRank() {
+            return rank;
+        }
+
+        public int getTimeBonus() {
+            return timeBonus;
+        }
     }
 }
