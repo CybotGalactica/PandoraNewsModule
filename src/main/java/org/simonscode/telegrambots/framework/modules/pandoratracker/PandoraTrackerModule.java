@@ -40,6 +40,12 @@ public class PandoraTrackerModule extends ModuleAdapter {
             return;
         }
 
+        message = Utils.checkForCommand(update, "/scoreboard");
+        if (message != null && message.getChatId() == commandSource) {
+            pandoraTracker.postScoreboard();
+            return;
+        }
+
         System.out.println(update);
     }
 
@@ -71,4 +77,7 @@ public class PandoraTrackerModule extends ModuleAdapter {
         return State.class;
     }
 
+    PandoraTracker getTracker() {
+        return pandoraTracker;
+    }
 }
