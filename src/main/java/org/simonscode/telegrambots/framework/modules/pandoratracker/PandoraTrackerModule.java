@@ -24,6 +24,7 @@ public class PandoraTrackerModule extends ModuleAdapter {
         if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
             pandoraTracker.stop();
+            System.out.println("Stopped!");
             return;
         }
 
@@ -31,18 +32,21 @@ public class PandoraTrackerModule extends ModuleAdapter {
         if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
             pandoraTracker.start(sender);
+            System.out.println("Started!");
             return;
         }
 
         message = Utils.checkForCommand(update, "/toggle");
         if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.toggleOfficial();
+            System.out.println("Toggled!");
             return;
         }
 
         message = Utils.checkForCommand(update, "/scoreboard");
         if (message != null && message.getChatId() == commandSource) {
             pandoraTracker.postScoreboard();
+            System.out.println("Printing Scoreboard!");
             return;
         }
 
