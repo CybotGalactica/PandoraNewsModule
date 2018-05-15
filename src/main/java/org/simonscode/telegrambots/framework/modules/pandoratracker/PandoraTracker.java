@@ -1,30 +1,29 @@
 package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
 import org.simonscode.telegrambots.framework.Bot;
-import org.telegram.telegrambots.ApiContextInitializer;
-import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.ParseMode;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
-import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PandoraTracker {
+    @SuppressWarnings("FieldCanBeLocal")
     private final String debugChannel = "-1001334509240";
     private final String unofficialChannel = "-1001334509240";
     private final String officialChannel = "@pandonews";
     private final ConcurrentLinkedQueue<Update> messageQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<String> debugQueue = new ConcurrentLinkedQueue<>();
+    @SuppressWarnings("FieldCanBeLocal")
     private final long timeBetweenMessages = 10_000;
+    @SuppressWarnings("FieldCanBeLocal")
+    private boolean grouping = false;
     private final Timer messageTimer = new Timer();
     private Integer scoreboardMessageId;
     private boolean isOfficial = true;
@@ -35,17 +34,6 @@ public class PandoraTracker {
     private WSClient wsPuzzleFeed;
     private WSClient wsNewsFeed;
     private Scoreboard scoreboard;
-    private int counter = 0;
-
-    public static void main(String[] args) throws TelegramApiRequestException {
-        ApiContextInitializer.init();
-        TelegramBotsApi api = new TelegramBotsApi();
-        PandoraTrackerModule pandoraTrackerModule = new PandoraTrackerModule();
-        Bot bot = new Bot("Bot", args[0], Collections.singletonList(pandoraTrackerModule));
-        pandoraTrackerModule.postLoad(bot);
-        pandoraTrackerModule.getTracker().isOfficial = false;
-        api.registerBot(bot);
-    }
 
     void start(Bot bot) {
         this.bot = bot;
@@ -82,16 +70,15 @@ public class PandoraTracker {
                 }
             }
             sendUpdate(sb.toString());
-            //             sendUpdate("Prop Newsmessage " + counter++);
 
-            if (history.size() >= 3) {
+            if (history.size() > 3) {
                 updateScoreboard(history.poll());
             }
         }
         if (!debugQueue.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             while (!debugQueue.isEmpty()) {
-                sb.append(String.format("[%s] %s", isOfficial ? "Testing" : "Production", debugQueue.poll()));
+                sb.append(String.format("[%s] %s", isOfficial ? "Production" : "Testing", debugQueue.poll()));
                 if (!debugQueue.isEmpty()) {
                     sb.append('\n');
                 }
@@ -111,40 +98,10 @@ public class PandoraTracker {
         }
     }
 
-    void postScoreboard() {
-        if (scoreboard == null) {
-            debug("Not initialized, yet!");
-            return;
-        }
-        try {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setParseMode(ParseMode.MARKDOWN);
-            sendMessage.setText(scoreboard.fetchScoreBoardMessage());
-            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
-            scoreboardMessageId = bot.execute(sendMessage).getMessageId();
-            //            debug("Sent Scoreboard!");
-        } catch (IOException | TelegramApiException e) {
-            e.printStackTrace();
-            debug("Sending Scoreboard failed! " + e.getMessage());
-        }
-    }
-
-    private void sendUpdate(String message) {
-        try {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setText(message);
-            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
-            history.add(bot.execute(sendMessage));
-            System.out.println("[Send] " + sendMessage.getText());
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void updateScoreboard(Message message) {
         Thread updater = new Thread(() -> {
             try {
-                String scoreboardText = scoreboard.fetchScoreBoardMessage();
+                String scoreboardText = scoreboard.getText();
                 EditMessageText edit = new EditMessageText();
                 edit.setChatId(message.getChatId());
                 edit.setMessageId(message.getMessageId());
@@ -153,9 +110,6 @@ public class PandoraTracker {
                 moveLastMessageToscoreboard(message);
                 scoreboardMessageId = ((Message) bot.execute(edit)).getMessageId();
                 System.out.println("[Edit] " + scoreboardText);
-            } catch (IOException e) {
-                debug("Error fetching scoreboard!" + e.getMessage());
-                e.printStackTrace();
             } catch (TelegramApiException e) {
                 debug("Error during scoreboard message migrating!" + e.getMessage());
                 e.printStackTrace();
@@ -163,6 +117,36 @@ public class PandoraTracker {
         });
         updater.setDaemon(true);
         updater.start();
+    }
+
+    private void sendUpdate(String message) {
+        try {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setText(message);
+            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
+            history.add(bot.execute(sendMessage));
+            System.out.println("[Sent] " + sendMessage.getText());
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void postScoreboard() {
+        if (scoreboard == null) {
+            debug("Not initialized, yet!");
+            return;
+        }
+        try {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setParseMode(ParseMode.MARKDOWN);
+            sendMessage.setText(scoreboard.getText());
+            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
+            scoreboardMessageId = bot.execute(sendMessage).getMessageId();
+            //            debug("Sent Scoreboard!");
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+            debug("Sending Scoreboard failed! " + e.getMessage());
+        }
     }
 
     void debug(String debugMessage) {
@@ -177,7 +161,7 @@ public class PandoraTracker {
         edit.setChatId(message.getChatId());
         edit.setMessageId(scoreboardMessageId);
         edit.setText(message.getText());
-        System.out.println("[Edit] " + message.getText());
+        System.out.println("[Edited] " + message.getText());
         try {
             bot.execute(edit);
         } catch (TelegramApiException e) {
@@ -186,7 +170,7 @@ public class PandoraTracker {
         }
     }
 
-    public void stop() {
+    void stop() {
         wsKillFeed.close();
         wsKillShout.close();
         wsPuzzleFeed.close();
@@ -201,10 +185,22 @@ public class PandoraTracker {
         System.out.println("Received: " + update);
         db.insertMessage(update);
         messageQueue.add(new Update(type, update));
+        if (!grouping) {
+            sendMessageIfNeeded();
+        }
     }
 
     void toggleOfficial() {
         isOfficial = !isOfficial;
         debug("Switched to " + (isOfficial ? "Official" : "Debug"));
+    }
+
+    void toggleGrouping() {
+        grouping = !grouping;
+        debug((grouping ? "Enabled" : "Disabled") + " grouping");
+    }
+
+    public void setOfficial(boolean isOfficial) {
+        this.isOfficial = isOfficial;
     }
 }

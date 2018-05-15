@@ -16,10 +16,10 @@ public class TestRunner {
     public static void main(String[] args) throws TelegramApiRequestException {
         ApiContextInitializer.init();
         TelegramBotsApi api = new TelegramBotsApi();
-
-        Bot bot = new Bot(testBotUsername, args[0], Collections.singletonList(testModule));
-        testModule.preLoad(bot);
+        PandoraTrackerModule pandoraTrackerModule = new PandoraTrackerModule();
+        Bot bot = new Bot("Bot", args[0], Collections.singletonList(pandoraTrackerModule));
+        pandoraTrackerModule.postLoad(bot);
+        pandoraTrackerModule.getTracker().setOfficial(false);
         api.registerBot(bot);
-        testModule.postLoad(bot);
     }
 }

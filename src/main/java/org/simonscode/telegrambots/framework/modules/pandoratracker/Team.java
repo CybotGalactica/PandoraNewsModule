@@ -1,9 +1,10 @@
 package org.simonscode.telegrambots.framework.modules.pandoratracker;
 
+@SuppressWarnings("unused")
 public class Team {
     private final String name;
     private final String alias;
-    public final int userId;
+    private final int userId;
 
     public Team(String name, String alias, int userId) {
         this.name = name;
