@@ -10,7 +10,6 @@ import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Timer;
@@ -18,12 +17,14 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PandoraTracker {
+    @SuppressWarnings("FieldCanBeLocal")
     private final String debugChannel = "-1001334509240";
     private final String unofficialChannel = "-1001334509240";
     private final String officialChannel = "@pandonews";
     private final ConcurrentLinkedQueue<Update> messageQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<String> debugQueue = new ConcurrentLinkedQueue<>();
+    @SuppressWarnings("FieldCanBeLocal")
     private final long timeBetweenMessages = 10_000;
     private final Timer messageTimer = new Timer();
     private Integer scoreboardMessageId;
@@ -35,7 +36,6 @@ public class PandoraTracker {
     private WSClient wsPuzzleFeed;
     private WSClient wsNewsFeed;
     private Scoreboard scoreboard;
-    private int counter = 0;
 
     public static void main(String[] args) throws TelegramApiRequestException {
         ApiContextInitializer.init();
@@ -82,16 +82,15 @@ public class PandoraTracker {
                 }
             }
             sendUpdate(sb.toString());
-            //             sendUpdate("Prop Newsmessage " + counter++);
 
-            if (history.size() >= 3) {
+            if (history.size() > 3) {
                 updateScoreboard(history.poll());
             }
         }
         if (!debugQueue.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             while (!debugQueue.isEmpty()) {
-                sb.append(String.format("[%s] %s", isOfficial ? "Testing" : "Production", debugQueue.poll()));
+                sb.append(String.format("[%s] %s", isOfficial ? "Production" : "Testing", debugQueue.poll()));
                 if (!debugQueue.isEmpty()) {
                     sb.append('\n');
                 }
@@ -111,22 +110,25 @@ public class PandoraTracker {
         }
     }
 
-    void postScoreboard() {
-        if (scoreboard == null) {
-            debug("Not initialized, yet!");
-            return;
-        }
-        try {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setParseMode(ParseMode.MARKDOWN);
-            sendMessage.setText(scoreboard.fetchScoreBoardMessage());
-            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
-            scoreboardMessageId = bot.execute(sendMessage).getMessageId();
-            //            debug("Sent Scoreboard!");
-        } catch (IOException | TelegramApiException e) {
-            e.printStackTrace();
-            debug("Sending Scoreboard failed! " + e.getMessage());
-        }
+    private void updateScoreboard(Message message) {
+        Thread updater = new Thread(() -> {
+            try {
+                String scoreboardText = scoreboard.getText();
+                EditMessageText edit = new EditMessageText();
+                edit.setChatId(message.getChatId());
+                edit.setMessageId(message.getMessageId());
+                edit.setText(scoreboardText);
+                edit.setParseMode(ParseMode.MARKDOWN);
+                moveLastMessageToscoreboard(message);
+                scoreboardMessageId = ((Message) bot.execute(edit)).getMessageId();
+                System.out.println("[Edit] " + scoreboardText);
+            } catch (TelegramApiException e) {
+                debug("Error during scoreboard message migrating!" + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+        updater.setDaemon(true);
+        updater.start();
     }
 
     private void sendUpdate(String message) {
@@ -141,28 +143,22 @@ public class PandoraTracker {
         }
     }
 
-    private void updateScoreboard(Message message) {
-        Thread updater = new Thread(() -> {
-            try {
-                String scoreboardText = scoreboard.fetchScoreBoardMessage();
-                EditMessageText edit = new EditMessageText();
-                edit.setChatId(message.getChatId());
-                edit.setMessageId(message.getMessageId());
-                edit.setText(scoreboardText);
-                edit.setParseMode(ParseMode.MARKDOWN);
-                moveLastMessageToscoreboard(message);
-                scoreboardMessageId = ((Message) bot.execute(edit)).getMessageId();
-                System.out.println("[Edit] " + scoreboardText);
-            } catch (IOException e) {
-                debug("Error fetching scoreboard!" + e.getMessage());
-                e.printStackTrace();
-            } catch (TelegramApiException e) {
-                debug("Error during scoreboard message migrating!" + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-        updater.setDaemon(true);
-        updater.start();
+    void postScoreboard() {
+        if (scoreboard == null) {
+            debug("Not initialized, yet!");
+            return;
+        }
+        try {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setParseMode(ParseMode.MARKDOWN);
+            sendMessage.setText(scoreboard.getText());
+            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
+            scoreboardMessageId = bot.execute(sendMessage).getMessageId();
+            //            debug("Sent Scoreboard!");
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+            debug("Sending Scoreboard failed! " + e.getMessage());
+        }
     }
 
     void debug(String debugMessage) {
@@ -186,7 +182,7 @@ public class PandoraTracker {
         }
     }
 
-    public void stop() {
+    void stop() {
         wsKillFeed.close();
         wsKillShout.close();
         wsPuzzleFeed.close();

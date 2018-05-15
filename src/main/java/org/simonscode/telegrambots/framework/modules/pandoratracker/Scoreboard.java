@@ -19,6 +19,8 @@ public class Scoreboard {
     private final Gson gson;
     private Map<Integer, String> userIdToAlias;
     private Map<String, String> fullNameToAlias;
+    private String scoreboardText;
+    private Thread scoreboardFetcher;
 
     public Scoreboard() {
         userIdToAlias = new HashMap<>();
@@ -26,6 +28,8 @@ public class Scoreboard {
         gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
+        scoreboardFetcher = new Thread(this::fetchScoreboard);
+        scoreboardFetcher.setDaemon(true);
 
         fullNameToAlias.put("Meltdown 6", "Meltdown 6");
         fullNameToAlias.put("Arstotzkaasschaaf", "Arstotzkaasschaaf");
@@ -82,25 +86,39 @@ public class Scoreboard {
         userIdToAlias.put(28, "Disneyland");
     }
 
-    public String fetchScoreBoardMessage() throws IOException {
-        HttpClient client = HttpClients.createDefault();
-        HttpGet get = new HttpGet(URL);
-        HttpResponse response = client.execute(get);
-        HttpEntity entity = response.getEntity();
-        BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent()));
-        String json = "";
-        while (br.ready()) {
-            String line = br.readLine().trim();
-            if (line.startsWith("data: [{")) {
-                json = line;
-                break;
-            }
+    public String getText() {
+        if (scoreboardText == null) {
+            fetchScoreboard();
         }
-        String substring = json.substring(6, json.length() - 1);
-        List<ScoreboardRow> scores = parse(substring);
-        scores.sort(Comparator.comparingInt(ScoreboardRow::getRank));
+        if (!scoreboardFetcher.isAlive()) {
+            scoreboardFetcher.start();
+        }
+        return scoreboardText;
+    }
 
-        return generate(scores.subList(0, 10));
+    private void fetchScoreboard() {
+        try {
+            HttpClient client = HttpClients.createDefault();
+            HttpGet get = new HttpGet(URL);
+            HttpResponse response = client.execute(get);
+            HttpEntity entity = response.getEntity();
+            BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent()));
+            String json = "";
+            while (br.ready()) {
+                String line = br.readLine().trim();
+                if (line.startsWith("data: [{")) {
+                    json = line;
+                    break;
+                }
+            }
+            String substring = json.substring(6, json.length() - 1);
+            List<ScoreboardRow> scores = parse(substring);
+            scores.sort(Comparator.comparingInt(ScoreboardRow::getRank));
+
+            scoreboardText = generate(scores.subList(0, 10));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private List<ScoreboardRow> parse(String json) {
