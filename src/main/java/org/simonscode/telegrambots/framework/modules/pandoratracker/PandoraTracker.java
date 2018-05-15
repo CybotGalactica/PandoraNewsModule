@@ -22,9 +22,9 @@ public class PandoraTracker {
     private final ConcurrentLinkedQueue<String> debugQueue = new ConcurrentLinkedQueue<>();
     @SuppressWarnings("FieldCanBeLocal")
     private final long timeBetweenMessages = 10_000;
-    @SuppressWarnings("FieldCanBeLocal")
-    private boolean grouping = false;
     private final Timer messageTimer = new Timer();
+    @SuppressWarnings("FieldCanBeLocal")
+    private boolean grouping = true;
     private Integer scoreboardMessageId;
     private boolean isOfficial = true;
     private Bot bot;
@@ -47,7 +47,9 @@ public class PandoraTracker {
         messageTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                sendMessageIfNeeded();
+                if (grouping) {
+                    sendMessageIfNeeded();
+                }
             }
         }, timeBetweenMessages, timeBetweenMessages);
 
@@ -98,6 +100,36 @@ public class PandoraTracker {
         }
     }
 
+    void postScoreboard() {
+        if (scoreboard == null) {
+            debug("Not initialized, yet!");
+            return;
+        }
+        try {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setParseMode(ParseMode.MARKDOWN);
+            sendMessage.setText(scoreboard.getText());
+            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
+            scoreboardMessageId = bot.execute(sendMessage).getMessageId();
+            //            debug("Sent Scoreboard!");
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+            debug("Sending Scoreboard failed! " + e.getMessage());
+        }
+    }
+
+    private void sendUpdate(String message) {
+        try {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setText(message);
+            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
+            history.add(bot.execute(sendMessage));
+            System.out.println("[Sent] " + sendMessage.getText());
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void updateScoreboard(Message message) {
         Thread updater = new Thread(() -> {
             try {
@@ -117,36 +149,6 @@ public class PandoraTracker {
         });
         updater.setDaemon(true);
         updater.start();
-    }
-
-    private void sendUpdate(String message) {
-        try {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setText(message);
-            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
-            history.add(bot.execute(sendMessage));
-            System.out.println("[Sent] " + sendMessage.getText());
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    void postScoreboard() {
-        if (scoreboard == null) {
-            debug("Not initialized, yet!");
-            return;
-        }
-        try {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setParseMode(ParseMode.MARKDOWN);
-            sendMessage.setText(scoreboard.getText());
-            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
-            scoreboardMessageId = bot.execute(sendMessage).getMessageId();
-            //            debug("Sent Scoreboard!");
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-            debug("Sending Scoreboard failed! " + e.getMessage());
-        }
     }
 
     void debug(String debugMessage) {
