@@ -38,7 +38,6 @@ public class WSClient implements Closeable {
             webSocketClient = new WebSocketClient(new URI(address)) {
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
-                    tracker.debug("Connected: " + type.getValue());
                 }
 
                 @Override
@@ -50,7 +49,6 @@ public class WSClient implements Closeable {
                 public void onClose(int code, String reason, boolean remote) {
                     if (!closed) {
                         setRestart();
-                        tracker.debug("Websocket closed: " + type.getValue());
                     }
                 }
 

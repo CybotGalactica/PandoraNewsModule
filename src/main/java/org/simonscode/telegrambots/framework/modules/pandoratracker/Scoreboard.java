@@ -28,8 +28,6 @@ public class Scoreboard {
         gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
-        scoreboardFetcher = new Thread(this::fetchScoreboard);
-        scoreboardFetcher.setDaemon(true);
 
         fullNameToAlias.put("Meltdown 6", "Meltdown 6");
         fullNameToAlias.put("Arstotzkaasschaaf", "Arstotzkaasschaaf");
@@ -88,9 +86,12 @@ public class Scoreboard {
 
     public String getText() {
         if (scoreboardText == null) {
+            System.out.println("This should run once.");
             fetchScoreboard();
         }
-        if (!scoreboardFetcher.isAlive()) {
+        if (scoreboardFetcher == null) {
+            scoreboardFetcher = new Thread(this::fetchScoreboard);
+            scoreboardFetcher.setDaemon(true);
             scoreboardFetcher.start();
         }
         return scoreboardText;
@@ -119,6 +120,7 @@ public class Scoreboard {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        scoreboardFetcher = null;
     }
 
     private List<ScoreboardRow> parse(String json) {
