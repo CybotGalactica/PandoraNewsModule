@@ -19,8 +19,7 @@ dependencies {
 
     // Dependencies required on Runtime
 //    compile group: 'org.knowm.xchart', name: 'xchart', version: '3.5.0'
-//    compile group: 'org.jsoup', name: 'jsoup', version: '1.11.2'
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.5'
+    compile group: 'org.jsoup', name: 'jsoup', version: '1.11.2'
     runtime group: 'org.xerial', name: 'sqlite-jdbc', version: '3.21.0.1'
     compile group: 'org.java-websocket', name: 'Java-WebSocket', version: '1.3.8'
     compileOnly group: 'com.google.code.gson', name: 'gson', version: '2.8.2'
