@@ -4,12 +4,10 @@ import org.telegram.telegrambots.api.methods.send.SendMessage;
 
 public class Update {
 
-    private final Type type;
-    private final String input;
+    private final String message;
 
-    public Update(Type type, String input) {
-        this.type = type;
-        this.input = input;
+    public Update(String message) {
+        this.message = message;
     }
 
     public SendMessage getSendMessage() {
@@ -19,23 +17,6 @@ public class Update {
     }
 
     public String getText() {
-        return String.format("[%s] %s", type.getValue(), input);
-    }
-
-    enum Type {
-        NEWS("News"),
-        KILLFEED("Kill"),
-        KILLSHOUT("Kill"),
-        PUZZLE("Puzzle solved");
-
-        private final String value;
-
-        Type(String value) {
-            this.value = value;
-        }
-
-        String getValue() {
-            return value;
-        }
+        return String.format("%s", message);
     }
 }

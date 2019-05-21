@@ -17,13 +17,13 @@ public class WSClient implements Closeable {
     private boolean closed = false;
     private TimerTask restartTask;
 
-    public WSClient(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) {
+    public WSClient(PandoraTracker tracker, String address, MessageHandler messageHandler) {
         restartTimer = new Timer();
         restartTask = new TimerTask() {
             @Override
             public void run() {
                 try {
-                    restart(tracker, type, address, messageHandler);
+                    restart(tracker, address, messageHandler);
                 } catch (URISyntaxException e) {
                     restartTimer = new Timer();
                     restartTimer.schedule(restartTask, restartTimeout);
@@ -33,30 +33,30 @@ public class WSClient implements Closeable {
         };
 
         try {
-            restart(tracker, type, address, messageHandler);
+            restart(tracker, address, messageHandler);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
     }
 
-    private void restart(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) throws URISyntaxException {
+    private void restart(PandoraTracker tracker, String address, MessageHandler messageHandler) throws URISyntaxException {
         closed = false;
         webSocketClient = new WebSocketClient(new URI(address)) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {
-                tracker.debug("Connected: " + type.getValue());
+                tracker.debug("Connected");
             }
 
             @Override
             public void onMessage(String message) {
-                messageHandler.onMessage(type, message);
+                messageHandler.onMessage(message);
             }
 
             @Override
             public void onClose(int code, String reason, boolean remote) {
                 if (!closed) {
                     restartTimer.schedule(restartTask, restartTimeout);
-                    tracker.debug("Websocket closed: " + type.getValue());
+                    tracker.debug("Websocket closed");
                 }
             }
 
@@ -81,7 +81,7 @@ public class WSClient implements Closeable {
 
     @FunctionalInterface
     interface MessageHandler {
-        void onMessage(Update.Type type, String message);
+        void onMessage(String message);
     }
 }
 
