@@ -9,7 +9,7 @@ import org.telegram.telegrambots.api.objects.Update;
 @AutoService(Module.class)
 public class PandoraTrackerModule extends ModuleAdapter {
 
-    private final long commandSource = 275942348L;
+    //    private final long commandSource = 275942348L;
     private State state = new State();
     private PandoraTracker pandoraTracker = new PandoraTracker();
 
@@ -20,33 +20,47 @@ public class PandoraTrackerModule extends ModuleAdapter {
 
     @Override
     public void processUpdate(Bot sender, Update update) {
-        Message message = Utils.checkForCommand(update, "/end");
-        if (message != null && message.getChatId() == commandSource) {
-            pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
-            pandoraTracker.stop();
+        if (!update.hasMessage()) {
             return;
         }
-
-        message = Utils.checkForCommand(update, "/begin");
-        if (message != null && message.getChatId() == commandSource) {
-            pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
-            pandoraTracker.start(sender);
+        Message message = update.getMessage();
+        if (!message.hasText() || !message.getFrom().getUserName().equals("simon_struck")) {
             return;
         }
-
-        message = Utils.checkForCommand(update, "/toggle");
-        if (message != null && message.getChatId() == commandSource) {
-            pandoraTracker.toggleOfficial();
+        String command = message.getText();
+        if (command.length() < 2) {
             return;
         }
-
-        message = Utils.checkForCommand(update, "/scoreboard");
-        if (message != null && message.getChatId() == commandSource) {
-            pandoraTracker.postScoreboard();
-            return;
+        if (command.contains("@")) {
+            command = command.substring(1, command.indexOf("@"));
         }
-
-        System.out.println(update);
+        switch (command) {
+            case "begin":
+                pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
+                pandoraTracker.start(sender);
+                System.out.println("Started!");
+                break;
+            case "end":
+                pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
+                pandoraTracker.stop();
+                System.out.println("Stopped!");
+                break;
+            case "channel":
+                pandoraTracker.toggleOfficial();
+                System.out.println("Toggled channels!");
+                break;
+            case "scoreboard":
+                pandoraTracker.postScoreboard();
+                System.out.println("Printing Scoreboard!");
+                break;
+            case "grouping":
+                pandoraTracker.toggleGrouping();
+                System.out.println("Toggled grouping!");
+                break;
+            default:
+                Utils.logUpdate(update);
+                break;
+        }
     }
 
     @Override
@@ -77,7 +91,7 @@ public class PandoraTrackerModule extends ModuleAdapter {
         return State.class;
     }
 
-    PandoraTracker getTracker() {
+    public PandoraTracker getTracker() {
         return pandoraTracker;
     }
 }
