@@ -15,7 +15,7 @@ public class PandoraTrackerModule extends ModuleAdapter {
 
     @Override
     public ModuleInfo getModuleInfo() {
-        return new ModuleInfo("PandoraTracker", "2.0-SNAPSHOT", "Simon Struck", ModuleInfo.InstanciationPereference.SINGLE_INSTANCE_ACROSS_ALL_BOTS);
+        return new ModuleInfo("PandoraTracker", "2.0-SNAPSHOT", "Simon Struck & Niels Overkamp", ModuleInfo.InstanciationPereference.SINGLE_INSTANCE_ACROSS_ALL_BOTS);
     }
 
     @Override
@@ -24,7 +24,7 @@ public class PandoraTrackerModule extends ModuleAdapter {
             return;
         }
         Message message = update.getMessage();
-        if (!message.hasText() || !message.getFrom().getUserName().equals("simon_struck")) {
+        if (!message.hasText() || !(message.getFrom().getUserName().equals("simon_struck")) || message.getFrom().getUserName().equals("NielsOverkamp")) {
             return;
         }
         String command = message.getText();
