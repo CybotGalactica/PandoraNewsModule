@@ -10,5 +10,5 @@ class Update {
 
     public String getText() {
         return String.format("%s", message);
-
+    }
 }

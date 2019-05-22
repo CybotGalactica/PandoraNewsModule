@@ -33,6 +33,7 @@ public class PandoraTracker {
     private Bot bot;
     private Database db;
     private WSClient wsFeed;
+    private boolean enableScoreboard = false;
     private Scoreboard scoreboard;
     private Gson gson;
 
@@ -40,7 +41,9 @@ public class PandoraTracker {
         this.bot = bot;
         db = new Database(this);
         wsFeed = new WSClient(this, "wss://www.iapandora.nl/ws/pandora", this::onUpdate);
-        scoreboard = new Scoreboard();
+        if (enableScoreboard) {
+            scoreboard = new Scoreboard();
+        }
         gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
