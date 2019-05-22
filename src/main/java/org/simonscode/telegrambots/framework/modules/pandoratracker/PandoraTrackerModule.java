@@ -24,7 +24,7 @@ public class PandoraTrackerModule extends ModuleAdapter {
             return;
         }
         Message message = update.getMessage();
-        if (!message.hasText() || !(message.getFrom().getUserName().equals("simon_struck")) || message.getFrom().getUserName().equals("NielsOverkamp")) {
+        if (!message.hasText() || !(message.getFrom().getUserName().equals("simon_struck") || message.getFrom().getUserName().equals("NielsOverkamp"))) {
             return;
         }
         String command = message.getText();
