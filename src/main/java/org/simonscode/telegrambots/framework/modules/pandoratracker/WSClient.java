@@ -14,19 +14,19 @@ public class WSClient implements Closeable {
     private boolean closed = false;
     private Runnable restartTask;
 
-    WSClient(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) {
+    WSClient(PandoraTracker tracker, String address, MessageHandler messageHandler) {
         restartTask = () -> {
             try {
                 Thread.sleep(restartTimeout);
-                restart(tracker, type, address, messageHandler);
+                restart(tracker, address, messageHandler);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         };
-        restart(tracker, type, address, messageHandler);
+        restart(tracker, address, messageHandler);
     }
 
-    private void restart(PandoraTracker tracker, Update.Type type, String address, MessageHandler messageHandler) {
+    private void restart(PandoraTracker tracker, String address, MessageHandler messageHandler) {
         closed = false;
         try {
             webSocketClient = new WebSocketClient(new URI(address)) {
@@ -36,7 +36,7 @@ public class WSClient implements Closeable {
 
                 @Override
                 public void onMessage(String message) {
-                    messageHandler.onMessage(type, message);
+                    messageHandler.onMessage(message);
                 }
 
                 @Override
@@ -48,7 +48,7 @@ public class WSClient implements Closeable {
 
                 @Override
                 public void onError(Exception ex) {
-                    tracker.debug("Websocket restarting: " + type.toString());
+                    tracker.debug("Websocket restarting");
                 }
             };
             webSocketClient.connect();
@@ -75,7 +75,7 @@ public class WSClient implements Closeable {
 
     @FunctionalInterface
     interface MessageHandler {
-        void onMessage(Update.Type type, String message);
+        void onMessage(String message);
     }
 }
 

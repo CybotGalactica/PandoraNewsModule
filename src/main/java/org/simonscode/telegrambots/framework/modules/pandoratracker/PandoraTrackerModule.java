@@ -9,7 +9,7 @@ import org.telegram.telegrambots.api.objects.Update;
 @AutoService(Module.class)
 public class PandoraTrackerModule extends ModuleAdapter {
 
-    //    private final long commandSource = -1001210020895L;
+    //    private final long commandSource = 275942348L;
     private State state = new State();
     private PandoraTracker pandoraTracker = new PandoraTracker();
 
