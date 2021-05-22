@@ -1,4 +1,4 @@
-package org.simonscode.telegrambots.framework.modules.pandoratracker;
+package org.cybotgalactica.pandoratracker;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PandoraTracker {
     @SuppressWarnings("FieldCanBeLocal")
-    private final String debugChannel = "-1001405087548";
+    private final String debugChannel = "275942348";
     private final String unofficialChannel = debugChannel;
     private final String officialChannel = "@pandonews";
     private final ConcurrentLinkedQueue<Update> messageQueue = new ConcurrentLinkedQueue<>();
@@ -31,14 +31,15 @@ public class PandoraTracker {
     private Integer scoreboardMessageId;
     private boolean isOfficial = false;
     private Bot bot;
+    private PandoraTrackerDiscordBot discordBot;
     private Database db;
     private WSClient wsFeed;
     private boolean enableScoreboard = false;
     private Scoreboard scoreboard;
     private Gson gson;
+    private String testMessage;
 
-    void start(Bot bot) {
-        this.bot = bot;
+    public void start() {
         db = new Database(this);
         wsFeed = new WSClient(this, "wss://www.iapandora.nl/ws/pandora", this::onUpdate);
         if (enableScoreboard) {
@@ -66,6 +67,14 @@ public class PandoraTracker {
         }, 3_000);
     }
 
+    public void linkTelegramBot(Bot bot) {
+        this.bot = bot;
+    }
+
+    public void linkDiscordBot(PandoraTrackerDiscordBot discordBot){
+        this.discordBot = discordBot;
+    }
+
     private void sendMessageIfNeeded() {
         if (!messageQueue.isEmpty()) {
             StringBuilder sb = new StringBuilder();
@@ -77,11 +86,11 @@ public class PandoraTracker {
             }
             sendUpdate(sb.toString());
 
-            if (history.size() > 3) {
+            if (history.size() > 3 && bot != null) {
                 updateScoreboard(history.poll());
             }
         }
-        if (!debugQueue.isEmpty()) {
+        if (!debugQueue.isEmpty() && bot != null) {
             StringBuilder sb = new StringBuilder();
             while (!debugQueue.isEmpty()) {
                 sb.append(String.format("[%s] %s", isOfficial ? "Production" : "Testing", debugQueue.poll()));
@@ -94,6 +103,11 @@ public class PandoraTracker {
     }
 
     private void sendDebug(String debugMessage) {
+        System.out.printf("[Debug] %s\n", debugMessage);
+        if (bot == null) {
+            System.out.println("Could not send debug message: telegrambot offline");
+            return;
+        }
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(debugChannel);
         sendMessage.setText(debugMessage);
@@ -105,7 +119,7 @@ public class PandoraTracker {
     }
 
     void postScoreboard() {
-        if (scoreboard == null) {
+        if (scoreboard == null || bot == null) {
             debug("Not initialized, yet!");
             return;
         }
@@ -123,18 +137,27 @@ public class PandoraTracker {
     }
 
     private void sendUpdate(String message) {
-        try {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setText(message);
-            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
-            history.add(bot.execute(sendMessage));
-            System.out.println("[Sent] " + sendMessage.getText());
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+        if (bot != null) {
+            try {
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setText(message);
+                sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
+                history.add(bot.execute(sendMessage));
+                System.out.println("[Sent] " + sendMessage.getText());
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
+        if (discordBot != null) {
+            discordBot.sendUpdate(message);
         }
     }
 
     private void updateScoreboard(Message message) {
+        if (scoreboard == null || bot == null) {
+            debug("Not initialized, yet!");
+            return;
+        }
         Thread updater = new Thread(() -> {
             try {
                 String scoreboardText = scoreboard.getText();
@@ -181,7 +204,7 @@ public class PandoraTracker {
         db.close();
     }
 
-    private void onUpdate(String updateMessage) {
+    public void onUpdate(String updateMessage) {
         if (updateMessage.equals("--heartbeat--")) {
             return;
         }
@@ -206,5 +229,9 @@ public class PandoraTracker {
 
     public void setOfficial(boolean isOfficial) {
         this.isOfficial = isOfficial;
+    }
+
+    public void setTestMessage(String testMessage) {
+        this.testMessage = testMessage;
     }
 }

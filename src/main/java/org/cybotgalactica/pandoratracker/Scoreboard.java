@@ -1,4 +1,4 @@
-package org.simonscode.telegrambots.framework.modules.pandoratracker;
+package org.cybotgalactica.pandoratracker;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
