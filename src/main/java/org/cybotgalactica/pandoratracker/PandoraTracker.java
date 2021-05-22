@@ -37,7 +37,6 @@ public class PandoraTracker {
     private boolean enableScoreboard = false;
     private Scoreboard scoreboard;
     private Gson gson;
-    private String testMessage;
 
     public void start() {
         db = new Database(this);
@@ -115,6 +114,9 @@ public class PandoraTracker {
             bot.execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
+        }
+        if (discordBot != null) {
+            discordBot.sendUpdate(debugMessage);
         }
     }
 
@@ -229,9 +231,5 @@ public class PandoraTracker {
 
     public void setOfficial(boolean isOfficial) {
         this.isOfficial = isOfficial;
-    }
-
-    public void setTestMessage(String testMessage) {
-        this.testMessage = testMessage;
     }
 }

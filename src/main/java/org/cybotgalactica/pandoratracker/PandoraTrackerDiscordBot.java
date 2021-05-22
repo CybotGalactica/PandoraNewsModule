@@ -17,12 +17,21 @@ import java.util.stream.Collectors;
 public class PandoraTrackerDiscordBot {
 
     private static final String bindingsFile = ".bindings";
+    private static final long testChannelId = 845753289793339472L;
+    private static final long debugChannelId = testChannelId;
 
-    private final Map<Long, TextChannel> bindings = new HashMap<Long, TextChannel>();
+    private final boolean isTestMode;
+    private final TextChannel debugChannel;
+
+    private final Map<Long, TextChannel> bindings = new HashMap<>();
     private final PandoraTracker tracker;
     private final DiscordApi api;
 
     public PandoraTrackerDiscordBot(String token, PandoraTracker tracker) {
+        this(token, tracker, false);
+    }
+
+    public PandoraTrackerDiscordBot(String token, PandoraTracker tracker, boolean isTestMode) {
         this.tracker = tracker;
         api = new DiscordApiBuilder()
                 .setToken(token)
@@ -45,6 +54,12 @@ public class PandoraTrackerDiscordBot {
                     break;
             }
         });
+        this.isTestMode = isTestMode;
+
+        this.debugChannel = api.getTextChannelById(debugChannelId).orElse(null);
+        if (this.debugChannel == null) {
+            System.out.printf("Could not find debug channel %d\n", debugChannelId);
+        }
     }
 
     private String onBind(String[] args, MessageCreateEvent event) {
@@ -144,7 +159,23 @@ public class PandoraTrackerDiscordBot {
         bindings.values().forEach(c -> c.sendMessage(string));
     }
 
+    public void sendDebug(String string) {
+        if (debugChannel != null) {
+            debugChannel.sendMessage(string);
+        }
+    }
+
     public void preLoad() {
+        if (isTestMode) {
+            Optional<TextChannel> channel = api.getTextChannelById(testChannelId);
+            if (channel.isPresent()) {
+                bindings.put(testChannelId, channel.get());
+            } else {
+                System.out.printf("Could not find test channel with id %d%n\n", testChannelId);
+            }
+            return;
+        }
+
         try (Scanner scanner = new Scanner(new File(bindingsFile))){
             while (scanner.hasNextLine()) {
                 String data = scanner.nextLine();
@@ -168,11 +199,15 @@ public class PandoraTrackerDiscordBot {
     }
 
     public void postUnload() {
+        if (isTestMode) {
+            return;
+        }
         System.out.println("Unload");
         try (FileWriter fileWriter = new FileWriter(bindingsFile)){
             try {
                 for (long id : bindings.keySet()) {
                     fileWriter.write(Long.toString(id));
+                    fileWriter.write('\n');
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -193,6 +228,7 @@ public class PandoraTrackerDiscordBot {
                             .collect(Collectors.joining(", ")));
             System.out.printf("[debug] %s\n", debugMessage);
             tracker.debug(debugMessage);
+            //noinspection UnnecessaryReturnStatement
             return;
         }
 
