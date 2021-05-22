@@ -116,7 +116,7 @@ public class PandoraTracker {
             e.printStackTrace();
         }
         if (discordBot != null) {
-            discordBot.sendUpdate(debugMessage);
+            discordBot.sendDebug(debugMessage);
         }
     }
 

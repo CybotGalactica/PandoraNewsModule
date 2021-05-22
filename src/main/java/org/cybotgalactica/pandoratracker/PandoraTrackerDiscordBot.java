@@ -18,7 +18,7 @@ public class PandoraTrackerDiscordBot {
 
     private static final String bindingsFile = ".bindings";
     private static final long testChannelId = 845753289793339472L;
-    private static final long debugChannelId = testChannelId;
+    private static final long debugChannelId = 845772133660753920L;
 
     private final boolean isTestMode;
     private final TextChannel debugChannel;
@@ -76,10 +76,10 @@ public class PandoraTrackerDiscordBot {
                 }
                 ServerTextChannel channel = channels.get(0);
                 if (bindings.containsKey(channel.getId())) {
-                    return String.format("Already bound to channel #%s", channel.getName());
+                    return String.format("Already bound to channel <#%d>", channel.getId());
                 }
                 bindings.put(channel.getId(), channel);
-                return String.format("Bound PandoraNewsBot to channel #%s", channel.getName());
+                return String.format("Bound PandoraNewsBot to channel <#%d>", channel.getId());
             } else {
                 return "Can only bind to named channel if in a server";
             }
@@ -88,7 +88,7 @@ public class PandoraTrackerDiscordBot {
             Optional<ServerTextChannel> optionalServerTextChannel = channel.asServerTextChannel();
             if (bindings.containsKey(channel.getId())) {
                 if (optionalServerTextChannel.isPresent()) {
-                    return String.format("Already bound to channel #%s", optionalServerTextChannel.get().getName());
+                    return String.format("Already bound to channel <#%d>", optionalServerTextChannel.get().getId());
                 } else {
                     return "Already bound to current channel";
                 }
@@ -96,7 +96,7 @@ public class PandoraTrackerDiscordBot {
 
             bindings.put(channel.getId(), channel);
             if (optionalServerTextChannel.isPresent()) {
-                return String.format("Bound PandoraNewsBot to channel #%s", optionalServerTextChannel.get().getName());
+                return String.format("Bound PandoraNewsBot to channel <#%d>", optionalServerTextChannel.get().getId());
             } else {
                 return "Bound PandoraNewsBot to current channel";
             }
@@ -112,15 +112,15 @@ public class PandoraTrackerDiscordBot {
                 if (channels.size() < 1) {
                     channels = server.getTextChannelsByNameIgnoreCase(args[1]);
                     if (channels.size() < 1) {
-                        return String.format("Could not find channel %s", args[1]);
+                        return String.format("Could not find channel named '%s'", args[1]);
                     }
                 }
                 ServerTextChannel channel = channels.get(0);
                 if (bindings.containsKey(channel.getId())) {
                     bindings.remove(channel.getId());
-                    return String.format("Unbound PandoraNewsBot from channel #%s", channel.getName());
+                    return String.format("Unbound PandoraNewsBot from channel <#%d>", channel.getId());
                 } else {
-                    return String.format("PandoraNewsBot is not bound to channel #%s", channel.getName());
+                    return String.format("PandoraNewsBot is not bound to channel <#%d>", channel.getId());
                 }
             } else {
                 return "Can only unbind named channels if in a server";
@@ -131,13 +131,13 @@ public class PandoraTrackerDiscordBot {
             if (bindings.containsKey(channel.getId())) {
                 bindings.remove(channel.getId());
                 if (optionalServerTextChannel.isPresent()) {
-                    return String.format("Unbound PandoraNewsBot from channel #%s", optionalServerTextChannel.get().getName());
+                    return String.format("Unbound PandoraNewsBot from channel <#%d>", optionalServerTextChannel.get().getId());
                 } else {
                     return "Unbound PandoraNewsBot from current channel";
                 }
             } else {
                 if (optionalServerTextChannel.isPresent()) {
-                    return String.format("PandoraNewsBot is not bound to channel #%s", optionalServerTextChannel.get().getName());
+                    return String.format("PandoraNewsBot is not bound to channel <#%d>", optionalServerTextChannel.get().getId());
                 } else {
                     return "PandoraNewsBot is not bound to current channel";
                 }
@@ -151,7 +151,7 @@ public class PandoraTrackerDiscordBot {
                         c.asServerTextChannel()
                                 .map(sc -> event.getServer().map(s -> sc.getServer().equals(s)).orElse(false))
                                 .orElse(false))
-                .map(c -> c.asServerTextChannel().map(sc -> "#" + sc.getName()).orElse("this channel"))
+                .map(c -> c.asServerTextChannel().map(sc -> String.format("<#%d>", sc.getId())).orElse("this channel"))
                 .collect(Collectors.joining(", "));
     }
 
