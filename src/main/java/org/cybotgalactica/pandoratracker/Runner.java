@@ -21,7 +21,9 @@ public class Runner {
         api.registerBot(bot);
 
         // Discord
-        PandoraTrackerDiscordBot discordBot = new PandoraTrackerDiscordBot(args[1]);
+        PandoraTrackerDiscordBot discordBot = new PandoraTrackerDiscordBot(args[1], pandoraTracker);
+        discordBot.preLoad();
+        Runtime.getRuntime().addShutdownHook(new Thread(discordBot::postUnload));
         pandoraTracker.linkDiscordBot(discordBot);
 
         // Start

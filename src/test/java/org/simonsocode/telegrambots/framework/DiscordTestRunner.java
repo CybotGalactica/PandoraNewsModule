@@ -8,7 +8,9 @@ public class DiscordTestRunner {
         PandoraTracker pandoraTracker = new PandoraTracker();
 
         // Discord
-        PandoraTrackerDiscordBot discordBot = new PandoraTrackerDiscordBot(args[0]);
+        PandoraTrackerDiscordBot discordBot = new PandoraTrackerDiscordBot(args[0], pandoraTracker);
+        discordBot.preLoad();
+        Runtime.getRuntime().addShutdownHook(new Thread(discordBot::postUnload));
         pandoraTracker.linkDiscordBot(discordBot);
 
         pandoraTracker.start();
