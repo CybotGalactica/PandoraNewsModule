@@ -1,4 +1,4 @@
-package org.simonscode.telegrambots.framework.modules.pandoratracker;
+package org.cybotgalactica.pandoratracker;
 
 import java.io.Closeable;
 import java.io.File;

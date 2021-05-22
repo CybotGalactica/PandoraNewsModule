@@ -1,4 +1,4 @@
-package org.simonscode.telegrambots.framework.modules.pandoratracker;
+package org.cybotgalactica.pandoratracker;
 
 
 import com.google.auto.service.AutoService;
@@ -9,9 +9,16 @@ import org.telegram.telegrambots.api.objects.Update;
 @AutoService(Module.class)
 public class PandoraTrackerModule extends ModuleAdapter {
 
-    //    private final long commandSource = 275942348L;
     private State state = new State();
-    private PandoraTracker pandoraTracker = new PandoraTracker();
+    private final PandoraTracker pandoraTracker;
+
+    public PandoraTrackerModule() {
+        pandoraTracker = new PandoraTracker();
+    }
+
+    public PandoraTrackerModule(PandoraTracker pandoraTracker) {
+        this.pandoraTracker = pandoraTracker;
+    }
 
     @Override
     public ModuleInfo getModuleInfo() {
@@ -20,6 +27,10 @@ public class PandoraTrackerModule extends ModuleAdapter {
 
     @Override
     public void processUpdate(Bot sender, Update update) {
+        if (pandoraTracker == null) {
+            System.out.println("Got update, but not initialized yet");
+            return;
+        }
         if (!update.hasMessage()) {
             return;
         }
@@ -37,7 +48,7 @@ public class PandoraTrackerModule extends ModuleAdapter {
         switch (command) {
             case "begin":
                 pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
-                pandoraTracker.start(sender);
+                pandoraTracker.linkTelegramBot(sender);
                 System.out.println("Started!");
                 break;
             case "end":
@@ -72,7 +83,7 @@ public class PandoraTrackerModule extends ModuleAdapter {
 
     @Override
     public void postLoad(Bot bot) {
-        pandoraTracker.start(bot);
+        pandoraTracker.linkTelegramBot(bot);
     }
 
     @Override
@@ -94,4 +105,5 @@ public class PandoraTrackerModule extends ModuleAdapter {
     public PandoraTracker getTracker() {
         return pandoraTracker;
     }
+
 }
