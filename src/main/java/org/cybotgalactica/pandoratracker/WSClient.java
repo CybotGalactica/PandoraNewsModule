@@ -6,24 +6,28 @@ import org.java_websocket.handshake.ServerHandshake;
 import java.io.Closeable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class WSClient implements Closeable {
 
     private final int restartTimeout = 5000;
+    private final int restartInterval = 60000;
     private WebSocketClient webSocketClient;
     private boolean closed = false;
-    private Runnable restartTask;
+    private final TimerTask restartTask;
+    private final Timer timer;
 
     WSClient(PandoraTracker tracker, String address, MessageHandler messageHandler) {
-        restartTask = () -> {
-            try {
-                Thread.sleep(restartTimeout);
+        restartTask = new TimerTask() {
+            @Override
+            public void run() {
                 restart(tracker, address, messageHandler);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         };
+        timer = new Timer();
         restart(tracker, address, messageHandler);
+        timer.scheduleAtFixedRate(restartTask, restartInterval, restartInterval);
     }
 
     private void restart(PandoraTracker tracker, String address, MessageHandler messageHandler) {
@@ -36,11 +40,13 @@ public class WSClient implements Closeable {
 
                 @Override
                 public void onMessage(String message) {
+                    System.out.println(message);
                     messageHandler.onMessage(message);
                 }
 
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
+                    tracker.debug("Websocket closed");
                     if (!closed) {
                         setRestart();
                     }
@@ -59,9 +65,7 @@ public class WSClient implements Closeable {
     }
 
     private void setRestart() {
-        Thread restartThread = new Thread(restartTask);
-        restartThread.setDaemon(true);
-        restartThread.start();
+        timer.schedule(restartTask, restartTimeout);
     }
 
     public void close() {

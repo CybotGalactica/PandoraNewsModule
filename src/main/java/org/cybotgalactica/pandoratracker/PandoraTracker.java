@@ -57,13 +57,15 @@ public class PandoraTracker {
             }
         }, timeBetweenMessages, timeBetweenMessages);
 
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                sendDebug(String.format("%s-bot is up and running!", isOfficial ? "Production" : "Testing"));
-                postScoreboard();
-            }
-        }, 3_000);
+        if (enableScoreboard) {
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    sendDebug(String.format("%s-bot is up and running!", isOfficial ? "Production" : "Testing"));
+                    postScoreboard();
+                }
+            }, 3_000);
+        }
     }
 
     public void linkTelegramBot(Bot bot) {
@@ -122,7 +124,7 @@ public class PandoraTracker {
 
     void postScoreboard() {
         if (scoreboard == null || bot == null) {
-            debug("Not initialized, yet!");
+            debug("[scoreboard] Not initialized, yet!");
             return;
         }
         try {
