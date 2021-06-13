@@ -2,6 +2,7 @@ package org.cybotgalactica.pandoratracker;
 
 
 import com.google.auto.service.AutoService;
+import org.simonscode.telegrambots.framework.Module;
 import org.simonscode.telegrambots.framework.*;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
@@ -38,24 +39,25 @@ public class PandoraTrackerModule extends ModuleAdapter {
         if (!message.hasText() || !(message.getFrom().getUserName().equals("simon_struck") || message.getFrom().getUserName().equals("NielsOverkamp"))) {
             return;
         }
-        String command = message.getText();
-        if (command.length() < 2) {
+        String[] args = message.getText().split("\\s", 2);
+        if (args.length == 0) {
             return;
         }
+        String command = args[0];
         if (command.contains("@")) {
             command = command.substring(1, command.indexOf("@"));
         }
         switch (command) {
-            case "begin":
-                pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
-                pandoraTracker.linkTelegramBot(sender);
-                System.out.println("Started!");
-                break;
-            case "end":
-                pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
-                pandoraTracker.stop();
-                System.out.println("Stopped!");
-                break;
+//            case "begin":
+//                pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually started the bot!");
+//                pandoraTracker.linkTelegramBot(sender);
+//                System.out.println("Started!");
+//                break;
+//            case "end":
+//                pandoraTracker.debug(Utils.parseUserName(update.getMessage().getFrom()) + " manually stopped the bot!");
+//                pandoraTracker.unlinkTelegramBot();
+//                System.out.println("Stopped!");
+//                break;
             case "channel":
                 pandoraTracker.toggleOfficial();
                 System.out.println("Toggled channels!");
@@ -67,6 +69,11 @@ public class PandoraTrackerModule extends ModuleAdapter {
             case "grouping":
                 pandoraTracker.toggleGrouping();
                 System.out.println("Toggled grouping!");
+                break;
+            case "say":
+                if (args.length == 2) {
+                    pandoraTracker.sendUpdate(args[1]);
+                }
                 break;
             default:
                 Utils.logUpdate(update);
@@ -84,11 +91,6 @@ public class PandoraTrackerModule extends ModuleAdapter {
     @Override
     public void postLoad(Bot bot) {
         pandoraTracker.linkTelegramBot(bot);
-    }
-
-    @Override
-    public void preUnload(Bot bot) {
-        pandoraTracker.stop();
     }
 
 

@@ -3,6 +3,7 @@ package org.cybotgalactica.pandoratracker;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.simonscode.telegrambots.framework.Bot;
 import org.telegram.telegrambots.api.methods.ParseMode;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
@@ -10,9 +11,8 @@ import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
-import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.lang.reflect.Type;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PandoraTracker {
@@ -33,14 +33,12 @@ public class PandoraTracker {
     private Bot bot;
     private PandoraTrackerDiscordBot discordBot;
     private Database db;
-    private WSClient wsFeed;
     private boolean enableScoreboard = false;
     private Scoreboard scoreboard;
     private Gson gson;
 
     public void start() {
         db = new Database(this);
-        wsFeed = new WSClient(this, "wss://www.iapandora.nl/ws/pandora", this::onUpdate);
         if (enableScoreboard) {
             scoreboard = new Scoreboard();
         }
@@ -57,22 +55,22 @@ public class PandoraTracker {
             }
         }, timeBetweenMessages, timeBetweenMessages);
 
-        if (enableScoreboard) {
-            new Timer().schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    sendDebug(String.format("%s-bot is up and running!", isOfficial ? "Production" : "Testing"));
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                sendDebug(String.format("%s-bot is up and running!", isOfficial ? "Production" : "Testing"));
+                if (enableScoreboard) {
                     postScoreboard();
                 }
-            }, 3_000);
-        }
+            }
+        }, 3_000);
     }
 
     public void linkTelegramBot(Bot bot) {
         this.bot = bot;
     }
 
-    public void linkDiscordBot(PandoraTrackerDiscordBot discordBot){
+    public void linkDiscordBot(PandoraTrackerDiscordBot discordBot) {
         this.discordBot = discordBot;
     }
 
@@ -87,7 +85,7 @@ public class PandoraTracker {
             }
             sendUpdate(sb.toString());
 
-            if (history.size() > 3 && bot != null) {
+            if (history.size() > 3 && bot != null && enableScoreboard) {
                 updateScoreboard(history.poll());
             }
         }
@@ -140,7 +138,7 @@ public class PandoraTracker {
         }
     }
 
-    private void sendUpdate(String message) {
+    public void sendUpdate(String message) {
         if (bot != null) {
             try {
                 SendMessage sendMessage = new SendMessage();
@@ -203,19 +201,13 @@ public class PandoraTracker {
         }
     }
 
-    void stop() {
-        wsFeed.close();
-        db.close();
-    }
-
     public void onUpdate(String updateMessage) {
-        if (updateMessage.equals("--heartbeat--")) {
-            return;
-        }
-        Update update = gson.fromJson(updateMessage, Update.class);
-        System.out.println("Received: " + update);
+        Type updateList = new TypeToken<ArrayList<Update>>() {
+        }.getType();
         db.insertMessage(updateMessage);
-        messageQueue.add(update);
+        List<Update> update = gson.fromJson(updateMessage, updateList);
+        messageQueue.addAll(update);
+        System.out.printf("Received %d updates\n", update.size());
         if (!grouping) {
             sendMessageIfNeeded();
         }

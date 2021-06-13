@@ -11,7 +11,7 @@ public class Update {
     }
 
     public String getText() {
-        return String.format("%s   %s", type.getIcon(), message);
+        return String.format("%s   %s", type == null ? "❓" : type.getIcon(), message);
     }
 
     enum Type {
