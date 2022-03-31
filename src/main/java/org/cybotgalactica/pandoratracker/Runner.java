@@ -1,5 +1,6 @@
 package org.cybotgalactica.pandoratracker;
 
+import org.cybotgalactica.pandoratracker.web.StompBroker;
 import org.simonscode.telegrambots.framework.Bot;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,6 @@ public class Runner {
         PandoraTracker pandoraTracker = new PandoraTracker();
         pandoraTracker.setOfficial(true);
 
-        // Stomp Broker
-        broker.setMessageHandler(pandoraTracker::onUpdate);
 
         // Telegram
         if (telegramToken != null && !telegramToken.equals("")) {

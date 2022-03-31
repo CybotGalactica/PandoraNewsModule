@@ -1,4 +1,4 @@
-package org.cybotgalactica.pandoratracker;
+package org.cybotgalactica.pandoratracker.models;
 
 public class Update {
 

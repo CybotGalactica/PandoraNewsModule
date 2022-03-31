@@ -1,4 +1,4 @@
-package org.cybotgalactica.pandoratracker;
+package org.cybotgalactica.pandoratracker.web;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

@@ -4,6 +4,7 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.cybotgalactica.pandoratracker.models.Update;
 import org.simonscode.telegrambots.framework.Bot;
 import org.telegram.telegrambots.api.methods.ParseMode;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
@@ -202,8 +203,7 @@ public class PandoraTracker {
     }
 
     public void onUpdate(String updateMessage) {
-        Type updateList = new TypeToken<ArrayList<Update>>() {
-        }.getType();
+        Type updateList = new TypeToken<ArrayList<Update>>() {}.getType();
         db.insertMessage(updateMessage);
         List<Update> update = gson.fromJson(updateMessage, updateList);
         messageQueue.addAll(update);
