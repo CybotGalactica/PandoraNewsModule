@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PandoraTrackerSpringApp {
+public class SpringApp {
     public static void main(String[] args) {
-        SpringApplication.run(PandoraTrackerSpringApp.class, args);
+        SpringApplication.run(SpringApp.class, args);
     }
 }

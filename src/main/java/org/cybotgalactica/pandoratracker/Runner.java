@@ -1,21 +1,19 @@
 package org.cybotgalactica.pandoratracker;
 
-import org.simonscode.telegrambots.framework.Bot;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.ApiContextInitializer;
-import org.telegram.telegrambots.TelegramBotsApi;
-import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
-
-import java.util.Collections;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @Service
 public class Runner {
     public Runner(StompBroker broker,
+                  @Value("${tracker.official:false}") boolean isOfficial,
                   @Value("${token.telegram:}") String telegramToken,
                   @Value("${token.discord:}") String discordToken) {
         PandoraTracker pandoraTracker = new PandoraTracker();
-        pandoraTracker.setOfficial(true);
+        pandoraTracker.setOfficial(isOfficial);
 
         // Stomp Broker
         broker.setMessageHandler(pandoraTracker::onUpdate);
@@ -23,13 +21,11 @@ public class Runner {
         // Telegram
         if (telegramToken != null && !telegramToken.equals("")) {
             try {
-                ApiContextInitializer.init();
-                TelegramBotsApi api = new TelegramBotsApi();
-                PandoraTrackerModule pandoraTrackerModule = new PandoraTrackerModule(pandoraTracker);
-                Bot bot = new Bot("Bot", telegramToken, Collections.singletonList(pandoraTrackerModule));
-                pandoraTrackerModule.postLoad(bot);
-                api.registerBot(bot);
-            } catch (TelegramApiRequestException e) {
+                TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
+                TelegramBot telegramBot = new TelegramBot(pandoraTracker, telegramToken);
+                api.registerBot(telegramBot);
+                pandoraTracker.linkTelegramBot(telegramBot);
+            } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
         } else {
@@ -38,7 +34,7 @@ public class Runner {
         
         // Discord
         if (discordToken != null && !discordToken.equals("")) {
-            PandoraTrackerDiscordBot discordBot = new PandoraTrackerDiscordBot(discordToken, pandoraTracker);
+            DiscordBot discordBot = new DiscordBot(discordToken, pandoraTracker);
             discordBot.preLoad();
             Runtime.getRuntime().addShutdownHook(new Thread(discordBot::postUnload));
             pandoraTracker.linkDiscordBot(discordBot);

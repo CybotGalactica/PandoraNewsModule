@@ -5,9 +5,9 @@ global.TextDecoder = util.TextDecoder
 const ReconnectingWebSocket = require("reconnecting-websocket")
 const { Client } = require("@stomp/stompjs")
 
-const isTest = false
+const isTest = process.env.PROXY_IS_TEST
 
-const sourceUrl = isTest ? "ws://echo.websocket.org" : "wss://iapandora.nl/ws/pandora"
+const sourceUrl = isTest ? "ws://localhost:10000" : "wss://iapandora.nl/ws/pandora"
 
 let queue = []
 
@@ -62,6 +62,7 @@ stomp.onWebSocketClose = () => {
 stomp.activate()
 
 if (isTest) {
+    console.log("starting test messages")
     setInterval(() => {
         ws.send("{\n" +
             "    \"type\": \"puzzle\",\n" +

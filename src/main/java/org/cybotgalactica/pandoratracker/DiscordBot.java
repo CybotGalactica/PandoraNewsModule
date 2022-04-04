@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class PandoraTrackerDiscordBot {
+public class DiscordBot {
 
     private static final String bindingsFile = ".bindings";
     private static final long testChannelId = 845753289793339472L;
@@ -27,11 +27,11 @@ public class PandoraTrackerDiscordBot {
     private final PandoraTracker tracker;
     private final DiscordApi api;
 
-    public PandoraTrackerDiscordBot(String token, PandoraTracker tracker) {
+    public DiscordBot(String token, PandoraTracker tracker) {
         this(token, tracker, false);
     }
 
-    public PandoraTrackerDiscordBot(String token, PandoraTracker tracker, boolean isTestMode) {
+    public DiscordBot(String token, PandoraTracker tracker, boolean isTestMode) {
         this.tracker = tracker;
         api = new DiscordApiBuilder()
                 .setToken(token)

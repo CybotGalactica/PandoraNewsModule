@@ -1,11 +1,11 @@
 package org.cybotgalactica.pandoratracker;
 
-public class Update {
+public class PandoraUpdate {
 
     private final Type type;
     private final String message;
 
-    public Update(Type type, String message) {
+    public PandoraUpdate(Type type, String message) {
         this.type = type;
         this.message = message;
     }

@@ -1,22 +1,19 @@
 package org.simonsocode.telegrambots.framework;
 
-import org.simonscode.telegrambots.framework.Bot;
-import org.cybotgalactica.pandoratracker.PandoraTrackerModule;
-import org.telegram.telegrambots.ApiContextInitializer;
-import org.telegram.telegrambots.TelegramBotsApi;
-import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
-
-import java.util.Collections;
+import org.cybotgalactica.pandoratracker.TelegramBot;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 public class TelegramTestRunner {
 
-    public static void main(String[] args) throws TelegramApiRequestException {
-        ApiContextInitializer.init();
-        TelegramBotsApi api = new TelegramBotsApi();
-        PandoraTrackerModule pandoraTrackerModule = new PandoraTrackerModule();
-        Bot bot = new Bot("Bot", args[0], Collections.singletonList(pandoraTrackerModule));
-        pandoraTrackerModule.postLoad(bot);
-        pandoraTrackerModule.getTracker().setOfficial(false);
-        api.registerBot(bot);
+    public static void main(String[] args) throws TelegramApiException {
+        TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
+        TelegramBot telegramBot = new TelegramBot(args[0]);
+        telegramBot.getTracker().setOfficial(false);
+        api.registerBot(telegramBot);
+        telegramBot.getTracker().linkTelegramBot(telegramBot);
+
+        telegramBot.getTracker().start();
     }
 }
