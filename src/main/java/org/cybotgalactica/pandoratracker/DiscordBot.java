@@ -192,9 +192,7 @@ public class DiscordBot {
                 }
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
             tracker.debug(String.format("Could not load bindings file %s. Initializing with empty list", bindingsFile));
-
         }
     }
 

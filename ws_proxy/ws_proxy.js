@@ -6,6 +6,7 @@ const ReconnectingWebSocket = require("reconnecting-websocket")
 const { Client } = require("@stomp/stompjs")
 
 const isTest = process.env.PROXY_IS_TEST
+const destination_addr = process.env.PROXY_DEST_ADDR
 
 const sourceUrl = isTest ? "ws://localhost:10000" : "wss://iapandora.nl/ws/pandora"
 
@@ -25,7 +26,7 @@ ws.onerror = (event) => {
 };
 
 const stomp = new Client({
-    brokerURL: "ws://localhost:42069",
+    brokerURL: `ws://${destination_addr}`,
     debug: console.log
 })
 

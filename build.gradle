@@ -12,10 +12,9 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
-//mainClassName = 'org.cybotgalactica.pandoratracker.PandoraTrackerSpringApp'
 
 group = 'org.cybotgalactica'
-version = '2.0-SNAPSHOT'
+version = '0.2'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -41,7 +40,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'org.cybotgalactica.pandoratracker.PandoraTrackerSpringApp'
+        attributes 'Main-Class': 'org.cybotgalactica.pandoratracker.SpringApp'
     }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }
