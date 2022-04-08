@@ -1,5 +1,7 @@
-package org.cybotgalactica.pandoratracker;
+package org.cybotgalactica.pandoratracker.bots;
 
+import org.cybotgalactica.pandoratracker.MessageConsumer;
+import org.cybotgalactica.pandoratracker.models.Message;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -16,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class DiscordBot {
 
-    private static final String bindingsFile = ".bindings";
+    private static final String bindingsFile = "discord.bindings";
     private static final long testChannelId = 845753289793339472L;
     private static final long debugChannelId = 845772133660753920L;
 
@@ -24,18 +26,20 @@ public class DiscordBot {
     private final TextChannel debugChannel;
 
     private final Map<Long, TextChannel> bindings = new HashMap<>();
-    private final PandoraTracker tracker;
     private final DiscordApi api;
 
-    public DiscordBot(String token, PandoraTracker tracker) {
-        this(token, tracker, false);
+    private final MessageConsumer debugConsumer;
+
+    public DiscordBot(String token, MessageConsumer debugConsumer) {
+        this(token, debugConsumer, false);
     }
 
-    public DiscordBot(String token, PandoraTracker tracker, boolean isTestMode) {
-        this.tracker = tracker;
+    public DiscordBot(String token, MessageConsumer debugConsumer, boolean isTestMode) {
         api = new DiscordApiBuilder()
                 .setToken(token)
                 .login().join();
+        
+        this.debugConsumer = debugConsumer;
 
         api.addMessageCreateListener(event -> {
             String[] args = event.getMessageContent().split("\\s+");
@@ -54,6 +58,7 @@ public class DiscordBot {
                     break;
             }
         });
+
         this.isTestMode = isTestMode;
 
         this.debugChannel = api.getTextChannelById(debugChannelId).orElse(null);
@@ -185,14 +190,14 @@ public class DiscordBot {
                     if (c.isPresent()) {
                         bindings.put(cId, c.get());
                     } else {
-                        tracker.debug(String.format("Could not find channel with id %d, skipping", cId));
+                        debugConsumer.consumeMessage(new Message(String.format("Could not find channel with id %d, skipping", cId)));
                     }
                 } catch (NumberFormatException e) {
-                    tracker.debug(String.format("Could not parse long id line %s", data));
+                    debugConsumer.consumeMessage(new Message(String.format("Could not parse long id line %s", data)));
                 }
             }
         } catch (FileNotFoundException e) {
-            tracker.debug(String.format("Could not load bindings file %s. Initializing with empty list", bindingsFile));
+            debugConsumer.consumeMessage(new Message(String.format("Could not load bindings file %s. Initializing with empty list", bindingsFile)));
         }
     }
 
@@ -215,7 +220,7 @@ public class DiscordBot {
                                 .map(id -> Long.toString(id))
                                 .collect(Collectors.joining(", ")));
                 System.out.printf("[debug] %s\n", debugMessage);
-                tracker.debug(debugMessage);
+                debugConsumer.consumeMessage(new Message(debugMessage));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -225,7 +230,7 @@ public class DiscordBot {
                             .map(id -> Long.toString(id))
                             .collect(Collectors.joining(", ")));
             System.out.printf("[debug] %s\n", debugMessage);
-            tracker.debug(debugMessage);
+            debugConsumer.consumeMessage(new Message(debugMessage));
             //noinspection UnnecessaryReturnStatement
             return;
         }

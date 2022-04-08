@@ -4,41 +4,36 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.cybotgalactica.pandoratracker.models.Message;
+import org.cybotgalactica.pandoratracker.models.PandoraUpdate;
 
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class PandoraTracker {
-    @SuppressWarnings("FieldCanBeLocal")
-    private final String debugChannel = "275942348";
-    private final String unofficialChannel = debugChannel;
-    private final String officialChannel = "@pandonews";
+public class PandoraTracker implements CommandConsumer {
+    private static final long GROUP_MESSAGE_INTERVAL = 10_000;
+
     private final ConcurrentLinkedQueue<PandoraUpdate> messageQueue = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<String> debugQueue = new ConcurrentLinkedQueue<>();
-    @SuppressWarnings("FieldCanBeLocal")
-    private final long timeBetweenMessages = 10_000;
+
     private final Timer messageTimer = new Timer();
-    @SuppressWarnings("FieldCanBeLocal")
+
     private boolean grouping = true;
-    private Integer scoreboardMessageId;
-    private boolean isOfficial = false;
-    private DiscordBot discordBot;
-    private TelegramBot telegramBot;
-    private Database db;
-    private boolean enableScoreboard = false;
-    private Scoreboard scoreboard;
+    private boolean debugGrouping = true;
+
+    private final boolean isOfficial;
+
+    private final List<MessageConsumer> messageConsumers = new ArrayList<>();
+    private final List<MessageConsumer> debugMessageConsumers = new ArrayList<>();
+
     private Gson gson;
 
+    public PandoraTracker(boolean isOfficial) {
+        this.isOfficial = isOfficial;
+    }
+
     public void start() {
-        db = new Database(this);
-        if (enableScoreboard) {
-            scoreboard = new Scoreboard();
-        }
         gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
@@ -50,29 +45,26 @@ public class PandoraTracker {
                     sendMessageIfNeeded();
                 }
             }
-        }, timeBetweenMessages, timeBetweenMessages);
+        }, GROUP_MESSAGE_INTERVAL, GROUP_MESSAGE_INTERVAL);
 
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
                 sendDebug(String.format("%s-bot is up and running!", isOfficial ? "Production" : "Testing"));
-//                if (enableScoreboard) {
-//                    postScoreboard();
-//                }
             }
         }, 3_000);
     }
 
-    public void linkTelegramBot(TelegramBot telegramBot) {
-        this.telegramBot = telegramBot;
+    public void addMessageConsumer(MessageConsumer messageConsumer) {
+        messageConsumers.add(messageConsumer);
     }
 
-    public void linkDiscordBot(DiscordBot discordBot) {
-        this.discordBot = discordBot;
+    public void addDebugMessageConsumer(MessageConsumer messageConsumer) {
+        debugMessageConsumers.add(messageConsumer);
     }
 
     private void sendMessageIfNeeded() {
-        if (!messageQueue.isEmpty() && (telegramBot != null || discordBot != null)) {
+        if (!messageQueue.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             while (!messageQueue.isEmpty()) {
                 sb.append(Objects.requireNonNull(messageQueue.poll()).getText());
@@ -80,13 +72,9 @@ public class PandoraTracker {
                     sb.append('\n');
                 }
             }
-            sendUpdate(sb.toString());
-
-//            if (history.size() > 3 && bot != null && enableScoreboard) {
-//                updateScoreboard(history.poll());
-//            }
+            sendMessage(sb.toString());
         }
-        if (!debugQueue.isEmpty() && (telegramBot != null || discordBot != null)) {
+        if (!debugQueue.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             while (!debugQueue.isEmpty()) {
                 sb.append(String.format("[%s] %s", isOfficial ? "Production" : "Testing", debugQueue.poll()));
@@ -97,115 +85,31 @@ public class PandoraTracker {
             sendDebug(sb.toString());
         }
     }
-
-    private void sendDebug(String debugMessage) {
-        System.out.printf("[Debug] %s\n", debugMessage);
-        if (telegramBot != null) {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(debugChannel);
-            sendMessage.setText(debugMessage);
-            try {
-                telegramBot.execute(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-        if (discordBot != null) {
-            discordBot.sendDebug(debugMessage);
-        }
-        if (telegramBot == null && discordBot == null) {
-            System.out.println("Could not send debug message: telegram and discord bot offline");
+    
+    public void sendMessage(String text) {
+        if (messageConsumers.isEmpty()) {
+            System.out.printf("Warning, the message \"%s\" did not get sent\n", text);
+        } else {
+            Message message = new Message(text);
+            messageConsumers.forEach((consumer) -> consumer.consumeMessage(message));
         }
     }
 
-//    void postScoreboard() {
-//        if (scoreboard == null || telegramBot == null) {
-//            debug("[scoreboard] Not initialized, yet!");
-//            return;
-//        }
-//        try {
-//            SendMessage sendMessage = new SendMessage();
-//            sendMessage.setParseMode(ParseMode.MARKDOWN);
-//            sendMessage.setText(scoreboard.getText());
-//            sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
-//            scoreboardMessageId = bot.execute(sendMessage).getMessageId();
-//            //            debug("Sent Scoreboard!");
-//        } catch (TelegramApiException e) {
-//            e.printStackTrace();
-//            debug("Sending Scoreboard failed! " + e.getMessage());
-//        }
-//    }
-
-    public void sendUpdate(String message) {
-        if (telegramBot != null) {
-            try {
-                SendMessage sendMessage = new SendMessage();
-                sendMessage.setText(message);
-                sendMessage.setChatId(isOfficial ? officialChannel : unofficialChannel);
-                history.add(telegramBot.execute(sendMessage));
-                System.out.println("[Sent] " + sendMessage.getText());
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-        if (discordBot != null) {
-            discordBot.sendUpdate(message);
-        }
-        if (telegramBot == null && discordBot == null) {
-            System.out.println("Could not send update message: telegram and discord bot offline");
+    private void sendDebug(String text) {
+        if (debugMessageConsumers.isEmpty()) {
+            System.out.printf("Warning, the debug message \"%s\" did not get sent\n", text);
+        } else {
+            Message message = new Message(text);
+            debugMessageConsumers.forEach((consumer) -> consumer.consumeMessage(message));
         }
     }
 
-//    private void updateScoreboard(Message message) {
-//        if (scoreboard == null || bot == null) {
-//            debug("Not initialized, yet!");
-//            return;
-//        }
-//        Thread updater = new Thread(() -> {
-//            try {
-//                String scoreboardText = scoreboard.getText();
-//                EditMessageText edit = new EditMessageText();
-//                edit.setChatId(message.getChatId());
-//                edit.setMessageId(message.getMessageId());
-//                edit.setText(scoreboardText);
-//                edit.setParseMode(ParseMode.MARKDOWN);
-//                moveLastMessageToscoreboard(message);
-//                scoreboardMessageId = ((Message) bot.execute(edit)).getMessageId();
-//                System.out.println("[Edit] " + scoreboardText);
-//            } catch (TelegramApiException e) {
-//                debug("Error during scoreboard message migrating!" + e.getMessage());
-//                e.printStackTrace();
-//            }
-//        });
-//        updater.setDaemon(true);
-//        updater.start();
-//    }
-
-    void debug(String debugMessage) {
+    public void queueDebug(String debugMessage) {
         debugQueue.add(debugMessage);
     }
 
-//    private void moveLastMessageToscoreboard(Message message) {
-//        if (scoreboardMessageId == null) {
-//            return;
-//        }
-//        EditMessageText edit = new EditMessageText();
-//        edit.setChatId(message.getChatId());
-//        edit.setMessageId(scoreboardMessageId);
-//        edit.setText(message.getText());
-//        System.out.println("[Edited] " + message.getText());
-//        try {
-//            bot.execute(edit);
-//        } catch (TelegramApiException e) {
-//            debug("Error during scoreboard message migrating!" + e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
-
     public void onUpdate(String updateMessage) {
-        Type updateList = new TypeToken<ArrayList<PandoraUpdate>>() {
-        }.getType();
-        db.insertMessage(updateMessage);
+        Type updateList = new TypeToken<ArrayList<PandoraUpdate>>() {}.getType();
         List<PandoraUpdate> pandoraUpdate = gson.fromJson(updateMessage, updateList);
         messageQueue.addAll(pandoraUpdate);
         System.out.printf("Received %d updates\n", pandoraUpdate.size());
@@ -214,17 +118,26 @@ public class PandoraTracker {
         }
     }
 
-    void toggleOfficial() {
-        isOfficial = !isOfficial;
-        debug("Switched to " + (isOfficial ? "Official" : "Debug"));
+    @Override
+    public void close() {
+        // TODO
+        sendDebug("Shutting down PandoraNews...");
     }
 
-    void toggleGrouping() {
+    @Override
+    public void toggleGrouping() {
         grouping = !grouping;
-        debug((grouping ? "Enabled" : "Disabled") + " grouping");
+        queueDebug((grouping ? "Enabled" : "Disabled") + " grouping");
     }
 
-    public void setOfficial(boolean isOfficial) {
-        this.isOfficial = isOfficial;
+    @Override
+    public void toggleDebugGrouping() {
+        debugGrouping = !debugGrouping;
+        queueDebug((grouping ? "Enabled" : "Disabled") + " grouping");
+    }
+
+    @Override
+    public void say(String text) {
+        sendMessage(text);
     }
 }

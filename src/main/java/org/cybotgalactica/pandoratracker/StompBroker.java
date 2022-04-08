@@ -1,6 +1,5 @@
 package org.cybotgalactica.pandoratracker;
 
-import jdk.nashorn.internal.objects.annotations.Setter;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 

@@ -1,8 +1,9 @@
 package org.simonsocode.telegrambots.framework;
 
+import org.cybotgalactica.pandoratracker.MessageConsumer;
 import org.cybotgalactica.pandoratracker.PandoraTracker;
-import org.cybotgalactica.pandoratracker.DiscordBot;
-import org.cybotgalactica.pandoratracker.TelegramBot;
+import org.cybotgalactica.pandoratracker.bots.DiscordBot;
+import org.cybotgalactica.pandoratracker.bots.TelegramBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -11,24 +12,40 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class TestRunner {
-    public static void main(String[] args) throws TelegramApiException {
-        PandoraTracker pandoraTracker = new PandoraTracker();
-        pandoraTracker.setOfficial(false);
+    public static void main(String[] args) {
+        PandoraTracker pandoraTracker = new PandoraTracker(false);
+
+        String telegramToken = args.length >= 2 ? args[1] : null;
+        String discordToken = args.length >= 3 ? args[2] : null;
+
+
+        MessageConsumer botDebugConsumer = (m) -> pandoraTracker.queueDebug(m.getText());
 
         // Telegram
-
-        TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
-        TelegramBot telegramBot = new TelegramBot(pandoraTracker, args[0]);
-        telegramBot.getTracker().setOfficial(false);
-        api.registerBot(telegramBot);
-        pandoraTracker.linkTelegramBot(telegramBot);
+        if (telegramToken != null && !telegramToken.equals("")) {
+            try {
+                TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
+                TelegramBot telegramBot = new TelegramBot(telegramToken, false, pandoraTracker, botDebugConsumer);
+                pandoraTracker.addMessageConsumer((m) -> telegramBot.sendMessage(m.getText()));
+                pandoraTracker.addDebugMessageConsumer((m) -> telegramBot.sendDebug(m.getText()));
+                api.registerBot(telegramBot);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Skipping telegram init: no token given");
+        }
 
         // Discord
-        DiscordBot discordBot = new DiscordBot(args[1], pandoraTracker, true);
-        discordBot.preLoad();
-        Runtime.getRuntime().addShutdownHook(new Thread(discordBot::postUnload));
-        pandoraTracker.linkDiscordBot(discordBot);
-
+        if (discordToken != null && !discordToken.equals("")) {
+            DiscordBot discordBot = new DiscordBot(discordToken, botDebugConsumer);
+            discordBot.preLoad();
+            Runtime.getRuntime().addShutdownHook(new Thread(discordBot::postUnload));
+            pandoraTracker.addMessageConsumer((m) -> discordBot.sendUpdate(m.getText()));
+            pandoraTracker.addDebugMessageConsumer((m) -> discordBot.sendDebug(m.getText()));
+        } else {
+            System.out.println("Skipping discord init: no token given");
+        }
         // Start
         pandoraTracker.start();
         new Timer().scheduleAtFixedRate(new TimerTask() {
