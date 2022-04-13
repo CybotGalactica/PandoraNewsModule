@@ -7,6 +7,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 public class TelegramBot extends TelegramLongPollingBot {
     private final static String DEBUG_CHANNEL = "275942348";
     private final static String UNOFFICIAL_CHANNEL = DEBUG_CHANNEL;
@@ -17,11 +21,21 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final CommandConsumer commandConsumer;
     private final MessageConsumer debugConsumer;
 
+    private final ConcurrentLinkedQueue<SendMessage> backlog = new ConcurrentLinkedQueue<>();
+    private final Timer messageTimer = new Timer();
+
     public TelegramBot(String token, boolean isOfficial, CommandConsumer commandConsumer, MessageConsumer debugConsumer) {
         this.token = token;
         this.isOfficial = isOfficial;
         this.commandConsumer = commandConsumer;
         this.debugConsumer = debugConsumer;
+
+        messageTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                sendBacklog();
+            }
+        }, 10_000, 10_000);
     }
 
     public void sendMessage(String message) {
@@ -36,6 +50,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String.format("Telegram bot failed to send message %s in channel %s",
                             message,
                             isOfficial ? OFFICIAL_CHANNEL : UNOFFICIAL_CHANNEL)));
+            backlog.add(sendMessage);
         }
     }
 
@@ -47,6 +62,21 @@ public class TelegramBot extends TelegramLongPollingBot {
             execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void sendBacklog() {
+        try {
+            while (!backlog.isEmpty()) {
+                execute(backlog.peek());
+                backlog.poll();
+            }
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+            debugConsumer.consumeMessage(new org.cybotgalactica.pandoratracker.models.Message(
+                    String.format("Telegram bot failed to send backlog messages in channel %s, %d messages in backlog remaining",
+                            isOfficial ? OFFICIAL_CHANNEL : UNOFFICIAL_CHANNEL,
+                            backlog.size())));
         }
     }
 

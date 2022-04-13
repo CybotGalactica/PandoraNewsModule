@@ -88,7 +88,7 @@ public class PandoraTracker implements CommandConsumer {
     
     public void sendMessage(String text) {
         if (messageConsumers.isEmpty()) {
-            System.out.printf("Warning, the message \"%s\" did not get sent\n", text);
+            System.out.printf("Warning, the message \"%s\" did not get sent: No Message Consumers\n", text);
         } else {
             Message message = new Message(text);
             messageConsumers.forEach((consumer) -> consumer.consumeMessage(message));
@@ -97,7 +97,7 @@ public class PandoraTracker implements CommandConsumer {
 
     private void sendDebug(String text) {
         if (debugMessageConsumers.isEmpty()) {
-            System.out.printf("Warning, the debug message \"%s\" did not get sent\n", text);
+            System.out.printf("Warning, the debug message \"%s\" did not get sent: No Message Consumers\n", text);
         } else {
             Message message = new Message(text);
             debugMessageConsumers.forEach((consumer) -> consumer.consumeMessage(message));

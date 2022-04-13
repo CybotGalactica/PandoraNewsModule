@@ -14,10 +14,10 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class DiscordBot {
-
     private static final String bindingsFile = "discord.bindings";
     private static final long testChannelId = 845753289793339472L;
     private static final long debugChannelId = 845772133660753920L;
@@ -29,6 +29,8 @@ public class DiscordBot {
     private final DiscordApi api;
 
     private final MessageConsumer debugConsumer;
+    private final Timer messageTimer = new Timer();
+    private ConcurrentLinkedQueue<ChannelMessage> backlog = new ConcurrentLinkedQueue<>();
 
     public DiscordBot(String token, MessageConsumer debugConsumer) {
         this(token, debugConsumer, false);
@@ -65,6 +67,13 @@ public class DiscordBot {
         if (this.debugChannel == null) {
             System.out.printf("Could not find debug channel %d\n", debugChannelId);
         }
+        
+        messageTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                sendBacklog();
+            }
+        }, 10_000, 10_000);
     }
 
     private String onBind(String[] args, MessageCreateEvent event) {
@@ -161,12 +170,41 @@ public class DiscordBot {
     }
 
     public void sendUpdate(String string) {
-        bindings.values().forEach(c -> c.sendMessage(string));
+        for (TextChannel c : bindings.values()) {
+            c.sendMessage(string)
+                    .whenComplete((r, e) -> {
+                        if (e != null && r == null) {
+                            e.printStackTrace();
+                            debugConsumer.consumeMessage(new org.cybotgalactica.pandoratracker.models.Message(
+                                    String.format("Telegram bot failed to send message %s in channel %s",
+                                            string,
+                                            c)));
+                            backlog.add(new ChannelMessage(string, c));
+                        }
+                    });
+        }
     }
 
     public void sendDebug(String string) {
         if (debugChannel != null) {
-            debugChannel.sendMessage(string);
+            debugChannel.sendMessage(string)
+                    .whenComplete((r, e) -> {
+                        if (e != null && r == null) {
+                            e.printStackTrace();
+                        }
+                    });
+        }
+    }
+
+    private void sendBacklog() {
+        while (!backlog.isEmpty()) {
+            ChannelMessage channelMessage = backlog.poll();
+            channelMessage.channel.sendMessage(channelMessage.message).whenComplete((r,e) -> {
+                if (e != null && r == null) {
+                    e.printStackTrace();
+                    backlog.add(channelMessage);
+                }
+            });
         }
     }
 
@@ -235,5 +273,15 @@ public class DiscordBot {
             return;
         }
 
+    }
+
+    private static class ChannelMessage {
+        String message;
+        TextChannel channel;
+
+        public ChannelMessage(String message, TextChannel channel) {
+            this.message = message;
+            this.channel = channel;
+        }
     }
 }

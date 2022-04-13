@@ -15,11 +15,13 @@ public class Runner {
                   @Value("${token.telegram:}") String telegramToken,
                   @Value("${token.discord:}") String discordToken) {
         PandoraTracker pandoraTracker = new PandoraTracker(isOfficial);
+        pandoraTracker.addDebugMessageConsumer((m) -> System.err.println(m.getText()));
 
         // Stomp Broker
         broker.setMessageHandler(pandoraTracker::onUpdate);
 
         MessageConsumer botDebugConsumer = (m) -> pandoraTracker.queueDebug(m.getText());
+
 
         // Telegram
         if (telegramToken != null && !telegramToken.equals("")) {
