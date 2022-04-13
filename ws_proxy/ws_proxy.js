@@ -1,7 +1,10 @@
-Object.assign(global, { WebSocket: require('ws') });
+const WebSocket = require('ws');
+global.WebSocket = WebSocket;
+
 const util = require("util")
 global.TextEncoder = util.TextEncoder;
 global.TextDecoder = util.TextDecoder
+
 const ReconnectingWebSocket = require("reconnecting-websocket")
 const { Client } = require("@stomp/stompjs")
 
@@ -10,8 +13,11 @@ const destination_addr = process.env.PROXY_DEST_ADDR
 
 const sourceUrl = isTest ? "ws://localhost:10000" : "wss://iapandora.nl/ws/pandora"
 
+
 let queue = []
 
+
+// Source Websocket connection
 
 const ws = new ReconnectingWebSocket(sourceUrl, [], {WebSocket});
 ws.onopen = () => {
@@ -25,13 +31,14 @@ ws.onerror = (event) => {
     console.error('[WebSocket error]', event.message);
 };
 
+// Destination STOMP connection
+
 const stomp = new Client({
     brokerURL: `ws://${destination_addr}`,
     debug: console.log
 })
 
 stomp.onStompError = console.error
-
 
 let sendIntervalID = null;
 stomp.onConnect = () => {
@@ -61,6 +68,8 @@ stomp.onWebSocketClose = () => {
 }
 
 stomp.activate()
+
+// Test messages sent to WS echo server
 
 if (isTest) {
     console.log("starting test messages")
