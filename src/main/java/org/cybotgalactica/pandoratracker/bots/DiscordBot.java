@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class DiscordBot {
-    private static final String bindingsFile = "discord.bindings";
-    private static final long testChannelId = 845753289793339472L;
-    private static final long debugChannelId = 845772133660753920L;
+    private static final String BINDINGS_FILE = "discord.bindings";
+    private static final long TEST_CHANNEL_ID = 845753289793339472L;
+    private static final long DEBUG_CHANNEL_ID = 845772133660753920L;
 
     private final boolean isTestMode;
     private final TextChannel debugChannel;
@@ -63,11 +63,11 @@ public class DiscordBot {
 
         this.isTestMode = isTestMode;
 
-        this.debugChannel = api.getTextChannelById(debugChannelId).orElse(null);
+        this.debugChannel = api.getTextChannelById(DEBUG_CHANNEL_ID).orElse(null);
         if (this.debugChannel == null) {
-            System.out.printf("Could not find debug channel %d\n", debugChannelId);
+            System.out.printf("Could not find debug channel %d\n", DEBUG_CHANNEL_ID);
         }
-        
+
         messageTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -210,16 +210,16 @@ public class DiscordBot {
 
     public void preLoad() {
         if (isTestMode) {
-            Optional<TextChannel> channel = api.getTextChannelById(testChannelId);
+            Optional<TextChannel> channel = api.getTextChannelById(TEST_CHANNEL_ID);
             if (channel.isPresent()) {
-                bindings.put(testChannelId, channel.get());
+                bindings.put(TEST_CHANNEL_ID, channel.get());
             } else {
-                System.out.printf("Could not find test channel with id %d%n\n", testChannelId);
+                System.out.printf("Could not find test channel with id %d%n\n", TEST_CHANNEL_ID);
             }
             return;
         }
 
-        try (Scanner scanner = new Scanner(new File(bindingsFile))){
+        try (Scanner scanner = new Scanner(new File(BINDINGS_FILE))){
             while (scanner.hasNextLine()) {
                 String data = scanner.nextLine();
                 try {
@@ -235,7 +235,7 @@ public class DiscordBot {
                 }
             }
         } catch (FileNotFoundException e) {
-            debugConsumer.consumeMessage(new Message(String.format("Could not load bindings file %s. Initializing with empty list", bindingsFile)));
+            debugConsumer.consumeMessage(new Message(String.format("Could not load bindings file %s. Initializing with empty list", BINDINGS_FILE)));
         }
     }
 
@@ -244,7 +244,7 @@ public class DiscordBot {
             return;
         }
         System.out.println("Unload");
-        try (FileWriter fileWriter = new FileWriter(bindingsFile)){
+        try (FileWriter fileWriter = new FileWriter(BINDINGS_FILE)){
             try {
                 for (long id : bindings.keySet()) {
                     fileWriter.write(Long.toString(id));
@@ -253,7 +253,7 @@ public class DiscordBot {
             } catch (IOException e) {
                 e.printStackTrace();
                 String debugMessage = String.format("Error occured while writing to bindings file %s. Dumping channel id's:\n%s",
-                        bindingsFile,
+                        BINDINGS_FILE,
                         bindings.keySet().stream()
                                 .map(id -> Long.toString(id))
                                 .collect(Collectors.joining(", ")));
@@ -263,7 +263,7 @@ public class DiscordBot {
         } catch (IOException e) {
             e.printStackTrace();
             String debugMessage = String.format("Could not open bindings file %s for write. Dumping channel id's:\n%s",
-                    bindingsFile,
+                    BINDINGS_FILE,
                     bindings.keySet().stream()
                             .map(id -> Long.toString(id))
                             .collect(Collectors.joining(", ")));
