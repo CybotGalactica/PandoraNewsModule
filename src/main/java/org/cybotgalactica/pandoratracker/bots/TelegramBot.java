@@ -60,6 +60,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendMessage(String message, String chatId) {
+        if (chatId == null) {
+            debugConsumer.consumeMessage(new org.cybotgalactica.pandoratracker.models.Message(
+                    String.format("Telegram bot failed to send message %s: channel null",
+                            message)));
+            return;
+        }
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText(message);
         sendMessage.setChatId(chatId);
@@ -96,7 +102,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             e.printStackTrace();
             debugConsumer.consumeMessage(new org.cybotgalactica.pandoratracker.models.Message(
                     String.format("Telegram bot failed to send backlog messages in channel %s, %d messages in backlog remaining",
-                            isOfficial ? OFFICIAL_CHANNEL : UNOFFICIAL_CHANNEL,
+                            channel,
                             backlog.size())));
         }
     }
