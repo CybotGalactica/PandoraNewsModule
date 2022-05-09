@@ -7,6 +7,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -15,6 +17,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class TelegramBot extends TelegramLongPollingBot {
     private final static String DEBUG_CHANNEL = "275942348";
@@ -173,6 +176,31 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public String getBotToken() {
         return token;
+    }
+
+    public void postUnload() {
+        System.out.println("Unload");
+        try (FileWriter fileWriter = new FileWriter(BINDINGS_FILE)){
+            try {
+                fileWriter.write(channel);
+                fileWriter.write('\n');
+            } catch (IOException e) {
+                e.printStackTrace();
+                String debugMessage = String.format("Error occured while writing to telegram bindings file %s. Dumping channel id:\n%s",
+                        BINDINGS_FILE, channel);
+                System.out.printf("[debug] %s\n", debugMessage);
+                debugConsumer.consumeMessage(new org.cybotgalactica.pandoratracker.models.Message(debugMessage));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            String debugMessage = String.format("Could not open telegram bindings file %s for write. Dumping channel id:\n%s",
+                    BINDINGS_FILE, channel);
+            System.out.printf("[debug] %s\n", debugMessage);
+            debugConsumer.consumeMessage(new org.cybotgalactica.pandoratracker.models.Message(debugMessage));
+            //noinspection UnnecessaryReturnStatement
+            return;
+        }
+
     }
 
 }

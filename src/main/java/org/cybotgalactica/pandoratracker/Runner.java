@@ -28,6 +28,7 @@ public class Runner {
             try {
                 TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
                 TelegramBot telegramBot = new TelegramBot(telegramToken, isOfficial, pandoraTracker, botDebugConsumer);
+                Runtime.getRuntime().addShutdownHook(new Thread(telegramBot::postUnload));
                 pandoraTracker.addMessageConsumer((m) -> telegramBot.sendMessage(m.getText()));
                 pandoraTracker.addDebugMessageConsumer((m) -> telegramBot.sendDebug(m.getText()));
                 api.registerBot(telegramBot);
