@@ -98,7 +98,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void sendBacklog() {
         try {
             while (!backlog.isEmpty()) {
-                execute(backlog.peek());
+                SendMessage message = backlog.peek();
+                message.setChatId(channel);
+                execute(message);
                 backlog.poll();
             }
         } catch (TelegramApiException e) {
