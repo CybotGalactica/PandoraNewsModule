@@ -11,7 +11,8 @@ const { Client } = require("@stomp/stompjs")
 const isTest = process.env.PROXY_IS_TEST
 const destination_addr = process.env.PROXY_DEST_ADDR
 
-const sourceUrl = isTest ? "ws://localhost:10000" : "wss://iapandora.nl/ws/pandora"
+const edition = "615c0331-6e61-4f56-8ea7-b2779ab0d89f";
+const sourceUrl = isTest ? "ws://localhost:10000" : `wss://iapandora.nl/editions/${edition}/feed`
 
 
 let queue = []
@@ -74,41 +75,64 @@ stomp.activate()
 if (isTest) {
     console.log("starting test messages")
     setInterval(() => {
-        ws.send("{\n" +
-            "    \"type\": \"puzzle\",\n" +
-            "    \"team\": {\n" +
-            "      \"id\": \"Beagle Boys\",\n" +
-            "      \"name\": \"Beagle Boys\"\n" +
-            "    },\n" +
-            "    \"puzzle\": {\n" +
-            "      \"number\": 1,\n" +
-            "      \"title\": \"Climbing trees with Prof. Banana\",\n" +
-            "      \"bonus\": false\n" +
-            "    },\n" +
-            "    \"time_bonus\": 0,\n" +
-            "    \"message\": \"Beagle Boys solved puzzle 1.\"\n" +
-            "  }")
+        ws.send("{" +
+                "    \"type\": \"solve\"," +
+                "    \"timestamp\": \"2023-05-03T18:26:40.058182+00:00\"," +
+                "    \"message\": \"Test solved bonus puzzle 1.\"," +
+                "    \"solve\": {" +
+                "        \"team\": {" +
+                "            \"id\": \"6d8304e8-e169-4600-92a9-06165131404e\"," +
+                "            \"name\": \"Test\"" +
+                "        }," +
+                "        \"code\": {" +
+                "            \"day\": null," +
+                "            \"number\": 1" +
+                "        }" +
+                "    }" +
+                "}")
     }, 5000)
     setInterval(() => {
-        ws.send("{\n" +
-            "    \"type\": \"kill\",\n" +
-            "    \"killer\": {\n" +
-            "      \"id\": 15,\n" +
-            "      \"name\": \"Knaboss\",\n" +
-            "      \"team\": {\n" +
-            "        \"id\": 14,\n" +
-            "        \"name\": \"Knaboeven\"\n" +
-            "      }\n" +
-            "    },\n" +
-            "    \"victim\": {\n" +
-            "      \"id\": 72,\n" +
-            "      \"name\": \"Obsidian\",\n" +
-            "      \"team\": {\n" +
-            "        \"id\": 12,\n" +
-            "        \"name\": \"Diamond hoes\"\n" +
-            "      }\n" +
-            "    },\n" +
-            "    \"message\": \"Knaboss pwned Obsidian's head!\"\n" +
-            "  }")
+        ws.send("{" +
+                "    \"type\": \"solve\"," +
+                "    \"timestamp\": \"2023-05-03T18:29:35.970522+00:00\"," +
+                "    \"message\": \"Test solved puzzle 2 of day 1.\"," +
+                "    \"solve\": {" +
+                "        \"team\": {" +
+                "            \"id\": \"6d8304e8-e169-4600-92a9-06165131404e\"," +
+                "            \"name\": \"Test\"" +
+                "        }," +
+                "        \"code\": {" +
+                "            \"day\": {" +
+                "                \"number\": 1" +
+                "            }," +
+                "            \"number\": 2" +
+                "        }" +
+                "    }" +
+                "}")
     }, 2777)
+    setInterval(() => {
+        ws.send("{" +
+                "    \"type\": \"kill\"," +
+                "    \"timestamp\": \"2023-05-03T18:28:26.068169+00:00\"," +
+                "    \"message\": \"Daniëlle (Test) killed Henkie de Panda (Test 2).\"," +
+                "    \"kill\": {" +
+                "        \"killer\": {" +
+                "            \"id\": \"923fff4a-534e-42d0-afb4-4ab680cd50b1\"," +
+                "            \"name\": \"Daniëlle\"," +
+                "            \"team\": {" +
+                "                \"id\": \"6d8304e8-e169-4600-92a9-06165131404e\"," +
+                "                \"name\": \"Test\"" +
+                "            }" +
+                "        }," +
+                "        \"victim\": {" +
+                "            \"id\": \"68265dab-e121-46a8-bd43-17d2f562754b\"," +
+                "            \"name\": \"Henkie de Panda\"," +
+                "            \"team\": {" +
+                "                \"id\": \"59dbb829-705b-439d-a21a-62eb6266cb67\"," +
+                "                \"name\": \"Test 2\"" +
+                "            }" +
+                "        }" +
+                "    }" +
+                "}")
+    }, 3567)
 }
